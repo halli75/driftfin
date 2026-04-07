@@ -2,109 +2,48 @@
 
 ## System Overview
 
-```
-                    ┌─────────────────────────────────┐
-                    │         Claude Code Agent        │
-                    │   (reads CLAUDE.md + modes/*.md) │
-                    └──────────┬──────────────────────┘
-                               │
-            ┌──────────────────┼──────────────────────┐
-            │                  │                       │
-     ┌──────▼──────┐   ┌──────▼──────┐   ┌───────────▼────────┐
-     │ Single Eval  │   │ Portal Scan │   │   Batch Process    │
-     │ (auto-pipe)  │   │  (scan.md)  │   │   (batch-runner)   │
-     └──────┬──────┘   └──────┬──────┘   └───────────┬────────┘
-            │                  │                       │
-            │           ┌──────▼──────┐          ┌────▼─────┐
-            │           │ pipeline.md │          │ N workers│
-            │           │ (URL inbox) │          │ (claude -p)
-            │           └─────────────┘          └────┬─────┘
-            │                                          │
-     ┌──────▼──────────────────────────────────────────▼──────┐
-     │                    Output Pipeline                      │
-     │  ┌──────────┐  ┌────────────┐  ┌───────────────────┐  │
-     │  │ Report.md│  │  PDF (HTML  │  │ Tracker TSV       │  │
-     │  │ (A-F eval)│  │  → Puppeteer)│  │ (merge-tracker)  │  │
-     │  └──────────┘  └────────────┘  └───────────────────┘  │
-     └────────────────────────────────────────────────────────┘
-                               │
-                    ┌──────────▼──────────┐
-                    │  data/applications.md │
-                    │  (canonical tracker)  │
-                    └──────────────────────┘
+```text
+            AGENTS.md
+                |
+          Codex session
+        /       |       \
+ single eval   scan    batch runner
+                    batch/batch-runner.mjs
+                            |
+                      codex exec workers
+                            |
+         reports/   output/   tracker-additions/
+                            |
+                  merge-tracker.mjs
+                            |
+                 data/applications.md
 ```
 
-## Evaluation Flow (Single Offer)
+## Single Evaluation Flow
 
-1. **Input**: User pastes JD text or URL
-2. **Extract**: Playwright/WebFetch extracts JD from URL
-3. **Classify**: Detect archetype (1 of 6 types)
-4. **Evaluate**: 6 blocks (A-F):
-   - A: Role summary
-   - B: CV match (gaps + mitigation)
-   - C: Level strategy
-   - D: Comp research (WebSearch)
-   - E: CV personalization plan
-   - F: Interview prep (STAR stories)
-5. **Score**: Weighted average across 10 dimensions (1-5)
-6. **Report**: Save as `reports/{num}-{company}-{date}.md`
-7. **PDF**: Generate ATS-optimized CV (`generate-pdf.mjs`)
-8. **Track**: Write TSV to `batch/tracker-additions/`, auto-merged
+1. Codex reads `AGENTS.md`, `modes/_shared.md`, and the selected mode file.
+2. The job description is gathered from a URL, pasted text, or a local JD file.
+3. The agent evaluates fit, writes a report, generates a PDF when needed, and writes a tracker TSV addition.
+4. `merge-tracker.mjs` merges additions into the canonical tracker.
 
-## Batch Processing
+## Batch Flow
 
-The batch system processes multiple offers in parallel:
+1. `batch/batch-runner.mjs` reads `batch/batch-input.tsv`.
+2. Each pending offer is assigned a report number and a worker prompt.
+3. The runner invokes `codex exec` for each offer.
+4. Workers produce:
+   - one report in `reports/`
+   - one PDF in `output/`
+   - one TSV addition in `batch/tracker-additions/`
+   - one JSON summary for the runner
+5. The runner merges tracker additions and verifies integrity.
 
-```
-batch-input.tsv    →  batch-runner.sh  →  N × claude -p workers
-(id, url, source)     (orchestrator)       (self-contained prompt)
-                           │
-                    batch-state.tsv
-                    (tracks progress)
-```
+## Source Files
 
-Each worker is a headless Claude instance (`claude -p`) that receives the full `batch-prompt.md` as context. Workers produce:
-- Report .md
-- PDF
-- Tracker TSV line
-
-The orchestrator manages parallelism, state, retries, and resume.
-
-## Data Flow
-
-```
-cv.md                    →  Evaluation context
-article-digest.md        →  Proof points for matching
-config/profile.yml       →  Candidate identity
-portals.yml              →  Scanner configuration
-templates/states.yml     →  Canonical status values
-templates/cv-template.html → PDF generation template
-```
-
-## File Naming Conventions
-
-- Reports: `{###}-{company-slug}-{YYYY-MM-DD}.md` (3-digit zero-padded)
-- PDFs: `cv-candidate-{company-slug}-{YYYY-MM-DD}.pdf`
-- Tracker TSVs: `batch/tracker-additions/{id}.tsv`
-
-## Pipeline Integrity
-
-Scripts maintain data consistency:
-
-| Script | Purpose |
-|--------|---------|
-| `merge-tracker.mjs` | Merges batch TSV additions into applications.md |
-| `verify-pipeline.mjs` | Health check: statuses, duplicates, links |
-| `dedup-tracker.mjs` | Removes duplicate entries by company+role |
-| `normalize-statuses.mjs` | Maps status aliases to canonical values |
-| `cv-sync-check.mjs` | Validates setup consistency |
-
-## Dashboard TUI
-
-The `dashboard/` directory contains a standalone Go TUI application that visualizes the pipeline:
-
-- Filter tabs: All, Evaluada, Aplicado, Entrevista, Top >=4, No Aplicar
-- Sort modes: Score, Date, Company, Status
-- Grouped/flat view
-- Lazy-loaded report previews
-- Inline status picker
+- `cv.md` - canonical CV
+- `article-digest.md` - proof points
+- `config/profile.yml` - candidate identity and targets
+- `modes/_profile.md` - user-specific framing
+- `portals.yml` - scanner configuration
+- `templates/states.yml` - canonical statuses
+- `templates/cv-template.html` - PDF template

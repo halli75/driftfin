@@ -7,12 +7,12 @@ authors:
     given-names: "Santiago"
     website: "https://santifer.io"
 url: "https://santifer.io"
-repository-code: "https://github.com/santifer/career-ops"
+repository-code: "https://github.com/halli75/career-ops-codex"
 license: MIT
 keywords:
   - ai
   - job-search
-  - claude-code
+  - codex
   - career
   - automation
   - llmops

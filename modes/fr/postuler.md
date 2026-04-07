@@ -4,7 +4,7 @@ Mode interactif pour le moment ou le candidat remplit un formulaire de candidatu
 
 ## Prerequis
 
-- **Ideal avec Playwright visible** : En mode visible, le candidat voit le navigateur et Claude peut interagir avec la page.
+- **Ideal avec Playwright visible** : En mode visible, le candidat voit le navigateur et Codex peut inspecter la page pendant qu'il prepare les reponses.
 - **Sans Playwright** : le candidat partage une capture d'ecran ou colle les questions manuellement.
 
 ## Workflow

@@ -24,6 +24,7 @@ modes/_profile.md
 
 # Generated
 .resolved-prompt-*
+.batch-worker-*
 node_modules/
 
 # OS
@@ -31,7 +32,4 @@ node_modules/
 *.mov
 *.mp4
 
-# Claude Code local
-.claude/settings.local.json
-.claude/memory/
 career-dashboard

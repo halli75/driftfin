@@ -42,14 +42,14 @@ These files contain system logic, scripts, templates, and instructions that impr
 | `modes/tracker.md` | Tracker instructions |
 | `modes/training.md` | Training evaluation instructions |
 | `modes/de/*` | German language modes |
-| `CLAUDE.md` | Agent instructions |
+| `modes/fr/*` | French language modes |
+| `AGENTS.md` | Agent instructions |
 | `*.mjs` | Utility scripts |
 | `batch/batch-prompt.md` | Batch worker prompt |
-| `batch/batch-runner.sh` | Batch orchestrator |
+| `batch/batch-runner.mjs` | Batch orchestrator |
 | `dashboard/*` | Go TUI dashboard |
 | `templates/*` | Base templates |
 | `fonts/*` | Self-hosted fonts |
-| `.claude/skills/*` | Skill definitions |
 | `docs/*` | Documentation |
 | `VERSION` | Current version number |
 | `DATA_CONTRACT.md` | This file |
