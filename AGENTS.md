@@ -20,8 +20,6 @@ There are two layers in this repo.
 - `AGENTS.md`
 - `modes/_shared.md`
 - `modes/*.md`
-- `modes/de/*`
-- `modes/fr/*`
 - `*.mjs`
 - `batch/*`
 - `templates/*`
@@ -79,11 +77,11 @@ Choose a mode from the user's request:
 | User intent | Mode file |
 |---|---|
 | Paste JD text or JD URL | `modes/auto-pipeline.md` |
-| Evaluate one offer | `modes/oferta.md` |
-| Compare offers | `modes/ofertas.md` |
+| Evaluate one offer | `modes/evaluate.md` |
+| Compare offers | `modes/compare.md` |
 | Deep company research | `modes/deep.md` |
 | Generate tailored PDF | `modes/pdf.md` |
-| Outreach/contact plan | `modes/contacto.md` |
+| Outreach/contact plan | `modes/outreach.md` |
 | Application assistant or autosubmit | `modes/apply.md` |
 | Portal scan | `modes/scan.md` |
 | Process inbox URLs | `modes/pipeline.md` |
@@ -112,7 +110,7 @@ Common changes:
 - Do not fabricate experience, metrics, dates, qualifications, or application answers.
 - For normal evaluation flows, strongly discourage low-fit applications below `4.0/5`.
 - In autosubmit mode, only submit rows whose `score` is greater than or equal to `automation.autosubmit.minimum_score` in `config/profile.yml`.
-- Prefer AgentMail for new ATS accounts and email verification when it is configured. Otherwise fall back to the candidate email.
+- Prefer AgentMail for new ATS accounts and email verification when it is configured. Use `node agentmail-state.mjs ensure-shared-inbox` and `node agentmail-state.mjs poll-verification ...` instead of manual inbox reasoning. Otherwise fall back to the candidate email.
 - Stop for CAPTCHA, MFA, or similar hard manual gates. Log the blocker and leave the tracker status unchanged.
 
 ## Offer Verification
@@ -179,6 +177,7 @@ No markdown, no dates, and no extra commentary in the status field.
 
 - Read `cv.md`, `config/profile.yml`, `modes/_profile.md`, and `article-digest.md` when relevant.
 - Before any autosubmit run, initialize `data/applications.csv`, `data/credentials.csv`, and `data/apply-log.csv` with `node autosubmit-state.mjs init`.
+- If AgentMail is enabled, verify it with `node agentmail-state.mjs status` and provision the shared inbox with `node agentmail-state.mjs ensure-shared-inbox`.
 - Use `data/credentials.csv` as the local credential ledger and `data/apply-log.csv` as the local submission log.
 - `data/applications.csv` must include `score` and `grade`; evaluation updates both.
 - Do not hardcode proof-point metrics. Read them from source files at evaluation time.

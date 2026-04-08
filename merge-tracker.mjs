@@ -15,8 +15,8 @@ import {
   updateApplications,
 } from './applications-store.mjs';
 
-const CAREER_OPS = dirname(fileURLToPath(import.meta.url));
-const ADDITIONS_DIR = join(CAREER_OPS, 'batch', 'tracker-additions');
+const ROOT = dirname(fileURLToPath(import.meta.url));
+const ADDITIONS_DIR = join(ROOT, 'batch', 'tracker-additions');
 const MERGED_DIR = join(ADDITIONS_DIR, 'merged');
 const DRY_RUN = process.argv.includes('--dry-run');
 
@@ -38,7 +38,7 @@ const STATUS_RANK = {
 
 function readReportUrl(reportPath) {
   if (!reportPath) return '';
-  const fullPath = join(CAREER_OPS, reportPath);
+  const fullPath = join(ROOT, reportPath);
   if (!existsSync(fullPath)) return '';
   const header = readFileSync(fullPath, 'utf8').slice(0, 1000);
   const match = header.match(/^\*\*URL:\*\*\s*(https?:\/\/\S+)/m);
@@ -67,7 +67,7 @@ function parseAddition(content) {
 
   const parts = trimmed.split('\t');
   if (parts.length < 8) return null;
-  const statusFirst = /\b(evalu|aplic|applied|respond|interview|offer|rechaz|reject|descart|discard|skip|no aplicar|cerrada|closed|blocked|failed)\b/i.test(parts[4]);
+  const statusFirst = /\b(evalu|applied|applying|respond|interview|offer|reject|discard|skip|closed|blocked|failed|duplicate|discovered)\b/i.test(parts[4]);
   return {
     application_id: parts[0],
     discovered_at: parts[1],
@@ -171,9 +171,9 @@ async function main() {
   }
 
   const additions = files.map((file) => parseAddition(readFileSync(join(ADDITIONS_DIR, file), 'utf8'))).filter(Boolean);
-  const preview = applyAdditions(readApplications(CAREER_OPS).map((row) => ({ ...row })), additions);
+  const preview = applyAdditions(readApplications(ROOT).map((row) => ({ ...row })), additions);
 
-  if (!existsSync(applicationsCsvPath(CAREER_OPS)) && existsSync(applicationsLegacyMdPath(CAREER_OPS))) {
+  if (!existsSync(applicationsCsvPath(ROOT)) && existsSync(applicationsLegacyMdPath(ROOT))) {
     console.log('Warning: applications.csv does not exist yet. This merge will create it without importing legacy markdown history.');
   }
 
@@ -185,7 +185,7 @@ async function main() {
     return;
   }
 
-  await updateApplications(CAREER_OPS, (rows) => applyAdditions(rows, additions).rows);
+  await updateApplications(ROOT, (rows) => applyAdditions(rows, additions).rows);
   mkdirSync(MERGED_DIR, { recursive: true });
   for (const file of files) {
     renameSync(join(ADDITIONS_DIR, file), join(MERGED_DIR, file));

@@ -34,6 +34,10 @@ Run Codex from the repo root, then use prompts like these.
 
 `Use the Driftfin apply workflow for this job page and autosubmit it using my saved profile and credential ledger.`
 
+If AgentMail is enabled:
+
+`Use the Driftfin apply workflow for this job page, autosubmit it, and use my configured AgentMail inbox for any verification email.`
+
 ## Batch Dry Run
 
 ```bash

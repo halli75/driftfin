@@ -2,55 +2,75 @@
 # Source of truth for Driftfin (writer) and dashboard (reader).
 # Both systems MUST use these exact states.
 #
-# Rule: The status field in applications.md must contain EXACTLY
+# Rule: The status field in applications.csv must contain EXACTLY
 # one of these values (case-insensitive). No markdown bold (**),
 # no dates, no extra text. Dates go in the date column.
 
 states:
+  - id: discovered
+    label: Discovered
+    description: New entry, not yet evaluated
+    dashboard_group: discovered
+
   - id: evaluated
     label: Evaluated
-    aliases: [evaluada]
     description: Offer evaluated with report, pending decision
     dashboard_group: evaluated
 
+  - id: applying
+    label: Applying
+    description: Submission in progress
+    dashboard_group: applying
+
   - id: applied
     label: Applied
-    aliases: [aplicado, enviada, aplicada, sent]
+    aliases: [sent]
     description: Application submitted
     dashboard_group: applied
 
+  - id: blocked
+    label: Blocked
+    description: Blocked by CAPTCHA, MFA, email verification, or manual gate
+    dashboard_group: blocked
+
+  - id: failed
+    label: Failed
+    description: Hard failure during submission
+    dashboard_group: failed
+
+  - id: duplicate
+    label: Duplicate
+    description: Already tracked under another entry
+    dashboard_group: duplicate
+
+  - id: closed
+    label: Closed
+    aliases: [discarded]
+    description: Listing closed or discarded by candidate
+    dashboard_group: closed
+
+  - id: skipped
+    label: Skipped
+    aliases: [skip, monitor]
+    description: Does not fit, do not apply
+    dashboard_group: skipped
+
   - id: responded
     label: Responded
-    aliases: [respondido]
     description: Company has responded (not yet interview)
     dashboard_group: responded
 
   - id: interview
     label: Interview
-    aliases: [entrevista]
     description: Active interview process
     dashboard_group: interview
 
   - id: offer
     label: Offer
-    aliases: [oferta]
     description: Offer received
     dashboard_group: offer
 
   - id: rejected
     label: Rejected
-    aliases: [rechazado, rechazada]
     description: Rejected by company
     dashboard_group: rejected
-
-  - id: discarded
-    label: Discarded
-    aliases: [descartado, descartada, cerrada, cancelada]
-    description: Discarded by candidate or offer closed
-    dashboard_group: discarded
-
-  - id: skip
-    label: SKIP
-    aliases: [no_aplicar, no aplicar, skip, monitor]
-    description: Doesn't fit, don't apply
-    dashboard_group: skip

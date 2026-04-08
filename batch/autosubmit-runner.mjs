@@ -12,6 +12,7 @@ import os from 'os';
 import { basename, dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { readApplications, parseScoreValue } from '../applications-store.mjs';
+import { getAgentMailSettings, getAutosubmitSettings, getCandidateEmail } from '../profile-config.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROJECT_DIR = join(__dirname, '..');
@@ -21,6 +22,7 @@ const LOCK_FILE = join(__dirname, 'autosubmit-runner.pid');
 const LOGS_DIR = join(__dirname, 'logs');
 const APPLY_LOG_FILE = join(PROJECT_DIR, 'data', 'apply-log.csv');
 const AUTOSUBMIT_STATE = join(PROJECT_DIR, 'autosubmit-state.mjs');
+const AGENTMAIL_STATE = join(PROJECT_DIR, 'agentmail-state.mjs');
 const STATE_HEADER = 'report_num\ttracker_num\tcompany\trole\tstatus\tstarted_at\tcompleted_at\tcredential_id\tcredential_action\tresult\terror\tretries';
 const isWindows = process.platform === 'win32';
 
@@ -146,19 +148,10 @@ function readReportUrl(reportPath) {
 }
 
 function readProfileSettings() {
-  const profilePath = join(PROJECT_DIR, 'config', 'profile.yml');
-  if (!existsSync(profilePath)) {
-    return {
-      baseEmail: '',
-      minimumScore: 4.0,
-    };
-  }
-  const content = readFileSync(profilePath, 'utf8');
-  const emailMatch = content.match(/^\s*email:\s*["']?([^"'\r\n]+)["']?\s*$/m);
-  const scoreMatch = content.match(/^\s*minimum_score:\s*["']?([^"'\r\n]+)["']?\s*$/m);
   return {
-    baseEmail: emailMatch ? emailMatch[1].trim() : '',
-    minimumScore: scoreMatch ? Number.parseFloat(scoreMatch[1]) || 4.0 : 4.0,
+    baseEmail: getCandidateEmail(PROJECT_DIR),
+    minimumScore: getAutosubmitSettings(PROJECT_DIR).minimumScore,
+    agentmail: getAgentMailSettings(PROJECT_DIR),
   };
 }
 
@@ -168,6 +161,9 @@ function ensurePrerequisites() {
   }
   if (!existsSync(AUTOSUBMIT_STATE)) {
     throw new Error(`Missing ${AUTOSUBMIT_STATE}`);
+  }
+  if (!existsSync(AGENTMAIL_STATE)) {
+    throw new Error(`Missing ${AGENTMAIL_STATE}`);
   }
 
   const version = codexVersionOk();
@@ -469,6 +465,22 @@ function runStateCommand(args) {
   return result.stdout.trim();
 }
 
+function runJsonScript(scriptPath, args) {
+  const result = runCommand(process.execPath, [scriptPath, ...args]);
+  if (result.status !== 0) {
+    throw new Error((result.stderr || result.stdout || `${basename(scriptPath)} failed: ${args.join(' ')}`).trim());
+  }
+  const output = result.stdout.trim();
+  if (!output) {
+    return {};
+  }
+  try {
+    return JSON.parse(output);
+  } catch (error) {
+    throw new Error(`Invalid JSON from ${basename(scriptPath)}: ${error.message}`);
+  }
+}
+
 function sanitizeNote(value) {
   return String(value ?? '').replace(/\s+/g, ' ').trim();
 }
@@ -545,7 +557,32 @@ function recordApplyOutcome(app, payload, durationSeconds) {
   runStateCommand(trackerArgs);
 }
 
-async function runWorker(app, baseEmail) {
+function prepareAgentMail(settings) {
+  if (!settings.agentmail.enabled) {
+    return {
+      enabled: false,
+      loginEmail: settings.baseEmail,
+      provider: 'candidate',
+      verificationTimeoutSeconds: 180,
+      pollIntervalSeconds: 5,
+    };
+  }
+
+  const payload = runJsonScript(AGENTMAIL_STATE, ['ensure-shared-inbox']);
+  if (payload.status !== 'ok' || !payload.inbox?.email) {
+    throw new Error(payload.message || 'AgentMail shared inbox could not be initialized');
+  }
+
+  return {
+    enabled: true,
+    loginEmail: payload.inbox.email,
+    provider: 'agentmail',
+    verificationTimeoutSeconds: settings.agentmail.verificationTimeoutSeconds,
+    pollIntervalSeconds: settings.agentmail.pollIntervalSeconds,
+  };
+}
+
+async function runWorker(app, runtime) {
   const startedAt = nowIso();
   const startedMs = Date.now();
   const retries = getRetries(app.reportNum);
@@ -575,7 +612,11 @@ async function runWorker(app, baseEmail) {
     REPORT_NUM: app.reportNum,
     TRACKER_NUM: app.trackerNum,
     REPORT_PATH: app.reportPath,
-    BASE_EMAIL: baseEmail,
+    BASE_EMAIL: runtime.baseEmail,
+    LOGIN_EMAIL: runtime.loginEmail,
+    AGENTMAIL_ENABLED: runtime.agentmailEnabled ? 'true' : 'false',
+    VERIFICATION_TIMEOUT_SECONDS: String(runtime.verificationTimeoutSeconds),
+    POLL_INTERVAL_SECONDS: String(runtime.pollIntervalSeconds),
     DATE: nowIso().slice(0, 10),
   });
 
@@ -750,7 +791,15 @@ async function main() {
 
   acquireRunnerLock();
   try {
-    await runPool(apps, options.parallel, (app) => runWorker(app, settings.baseEmail));
+    const agentmail = prepareAgentMail(settings);
+    const runtime = {
+      baseEmail: settings.baseEmail,
+      loginEmail: agentmail.loginEmail || settings.baseEmail,
+      agentmailEnabled: agentmail.enabled,
+      verificationTimeoutSeconds: agentmail.verificationTimeoutSeconds,
+      pollIntervalSeconds: agentmail.pollIntervalSeconds,
+    };
+    await runPool(apps, options.parallel, (app) => runWorker(app, runtime));
     printSummary();
   } finally {
     releaseRunnerLock();

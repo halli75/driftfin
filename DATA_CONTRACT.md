@@ -19,6 +19,7 @@ These files contain your personal data, customizations, and work product. Update
 | `data/scan-history.tsv` | Your scan history |
 | `data/credentials.csv` | Your local portal credentials ledger |
 | `data/apply-log.csv` | Your autosubmit attempt log |
+| `data/agentmail-state.json` | Your local shared AgentMail inbox state |
 | `reports/*` | Your evaluation reports |
 | `output/*` | Your generated PDFs |
 | `jds/*` | Your saved job descriptions |
@@ -30,21 +31,19 @@ These files contain system logic, scripts, templates, and instructions that impr
 | File | Purpose |
 |------|---------|
 | `modes/_shared.md` | Scoring system, global rules, tools |
-| `modes/oferta.md` | Evaluation mode instructions |
+| `modes/evaluate.md` | Evaluation mode instructions |
 | `modes/pdf.md` | PDF generation instructions |
 | `modes/scan.md` | Portal scanner instructions |
 | `modes/batch.md` | Batch processing instructions |
 | `modes/apply.md` | Application assistant instructions |
 | `modes/auto-pipeline.md` | Auto-pipeline instructions |
-| `modes/contacto.md` | LinkedIn outreach instructions |
+| `modes/outreach.md` | LinkedIn outreach instructions |
 | `modes/deep.md` | Research prompt instructions |
-| `modes/ofertas.md` | Comparison instructions |
+| `modes/compare.md` | Comparison instructions |
 | `modes/pipeline.md` | Pipeline processing instructions |
 | `modes/project.md` | Project evaluation instructions |
 | `modes/tracker.md` | Tracker instructions |
 | `modes/training.md` | Training evaluation instructions |
-| `modes/de/*` | German language modes |
-| `modes/fr/*` | French language modes |
 | `AGENTS.md` | Agent instructions |
 | `*.mjs` | Utility scripts |
 | `batch/batch-prompt.md` | Batch worker prompt |
@@ -52,6 +51,9 @@ These files contain system logic, scripts, templates, and instructions that impr
 | `batch/autosubmit-prompt.md` | Autosubmit worker prompt |
 | `batch/autosubmit-runner.mjs` | Autosubmit orchestrator |
 | `autosubmit-state.mjs` | Credential store and autosubmit logging utilities |
+| `agentmail-state.mjs` | AgentMail inbox lifecycle and verification polling CLI |
+| `agentmail-client.mjs` | AgentMail SDK wrapper and state manager |
+| `profile-config.mjs` | Shared profile and email automation config loader |
 | `applications-store.mjs` | Application CSV store and legacy parsing helpers |
 | `csv-store.mjs` | Locked CSV read/write helpers |
 | `migrate-applications-csv.mjs` | Explicit markdown-to-CSV migration tool |

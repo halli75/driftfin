@@ -20,7 +20,7 @@ The maintainers do not act as a Data Controller or Data Processor under GDPR or 
 This tool interfaces with AI models via third-party CLI tools. The maintainers do not control these models and cannot guarantee their behavior.
 
 - **Hallucinations:** AI models may fabricate skills, job history, qualifications, or company information. You remain responsible for verifying everything Driftfin sends to an employer.
-- **Safety guardrails:** This fork can be configured to auto-submit applications and create portal credentials. If you enable that behavior, you accept full responsibility for the AI's actions, account creation, and any resulting submissions.
+- **Safety guardrails:** This project can be configured to auto-submit applications and create portal credentials. If you enable that behavior, you accept full responsibility for the AI's actions, account creation, and any resulting submissions.
 - **Evaluation accuracy:** Job offer scores and recommendations are AI-generated opinions based on pattern matching, not professional career advice. They should inform your judgment, not replace it.
 
 ## 4. Third-Party Platforms

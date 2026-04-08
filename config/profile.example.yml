@@ -81,7 +81,9 @@ automation:
   email:
     preferred_provider: "agentmail"
     verification_timeout_seconds: 180
+    poll_interval_seconds: 5
     agentmail:
       enabled: false
       api_key_env: "AGENTMAIL_API_KEY"
       inbox_domain: ""
+      shared_inbox_username: "driftfin"

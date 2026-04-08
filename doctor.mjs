@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'fs';
 import { spawnSync } from 'child_process';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { getAgentMailSettings } from './profile-config.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
@@ -59,6 +60,32 @@ function checkCodexLogin() {
   return result.status === 0
     ? { pass: true, label: 'Codex login configured' }
     : { pass: false, label: 'Codex login not configured', fix: 'Run: codex login or configure your API-key login.' };
+}
+
+function checkAgentMail() {
+  const settings = getAgentMailSettings(ROOT);
+  if (!settings.enabled) {
+    return { pass: true, label: 'AgentMail disabled (optional)' };
+  }
+  if (!settings.apiKey) {
+    return {
+      pass: false,
+      label: `AgentMail enabled but ${settings.apiKeyEnv} is not set`,
+      fix: [
+        `Set ${settings.apiKeyEnv} in your shell or .env file.`,
+        'Run: npm run agentmail:status',
+      ],
+    };
+  }
+
+  const result = run(process.execPath, ['agentmail-state.mjs', 'status']);
+  return result.status === 0
+    ? { pass: true, label: 'AgentMail ready' }
+    : {
+      pass: false,
+      label: 'AgentMail check failed',
+      fix: (result.stderr || result.stdout || 'Run: npm run agentmail:status').trim(),
+    };
 }
 
 function checkCv() {
@@ -130,6 +157,7 @@ async function main() {
     checkNodeVersion(),
     checkCodexCli(),
     checkCodexLogin(),
+    checkAgentMail(),
     checkDependencies(),
     await checkPlaywright(),
     checkCv(),
