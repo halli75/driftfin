@@ -43,7 +43,7 @@ Si le role a l'ecran differe de celui evalue :
 - **Alerter le candidat** : "Le role a change de [X] a [Y]. Souhaites-tu que je reevalue ou que j'adapte les reponses au nouveau titre ?"
 - **Si adapter** : Ajuster les reponses au nouveau role sans reevaluer
 - **Si reevaluer** : Lancer l'evaluation complete A-F, mettre a jour le report, regenerer le Bloc G
-- **Mettre a jour le tracker** : Modifier le titre du role dans applications.md si necessaire
+- **Mettre a jour le tracker** : Modifier le titre du role dans applications.csv si necessaire
 
 ## Etape 4 -- Analyser les questions du formulaire
 
@@ -66,7 +66,7 @@ Pour chaque question, construire la reponse selon ce schema :
 2. **Bloc G precedent** : Si un brouillon existe, le prendre comme base et affiner
 3. **Ton "Je vous choisis"** : meme framework que dans l'auto-pipeline -- confiant, pas suppliant
 4. **Specificite** : citer quelque chose de concret de l'offre visible a l'ecran
-5. **career-ops proof point** : inclure dans "Informations complementaires" si un tel champ existe
+5. **Driftfin proof point** : inclure dans "Informations complementaires" si un tel champ existe
 
 **Champs specifiques aux formulaires francais courants :**
 - **Pretentions salariales (brut annuel)** -> Fourchette depuis `profile.yml`, en EUR, avec mention "negociable selon le package global"
@@ -102,9 +102,9 @@ Notes :
 ## Etape 6 -- Apres la candidature (optionnel)
 
 Si le candidat confirme que la candidature est envoyee :
-1. Mettre a jour le statut dans `applications.md` de "Evaluated" a "Applied"
+1. Mettre a jour le statut dans `applications.csv` de `evaluated` a `applied`
 2. Mettre a jour le Bloc G du report avec les reponses finales
-3. Suggerer l'etape suivante : `/career-ops contacto` pour du LinkedIn outreach vers le hiring manager
+3. Suggerer l'etape suivante : utiliser le workflow contact de Driftfin pour du LinkedIn outreach vers le hiring manager
 
 ## Gestion du defilement
 

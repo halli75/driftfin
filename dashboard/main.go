@@ -9,9 +9,9 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/santifer/career-ops/dashboard/internal/data"
-	"github.com/santifer/career-ops/dashboard/internal/theme"
-	"github.com/santifer/career-ops/dashboard/internal/ui/screens"
+	"github.com/halli75/driftfin/dashboard/internal/data"
+	"github.com/halli75/driftfin/dashboard/internal/theme"
+	"github.com/halli75/driftfin/dashboard/internal/ui/screens"
 )
 
 type viewState int
@@ -116,7 +116,7 @@ func (m appModel) View() string {
 }
 
 func main() {
-	pathFlag := flag.String("path", ".", "Path to career-ops directory")
+	pathFlag := flag.String("path", ".", "Path to Driftfin directory")
 	flag.Parse()
 
 	careerOpsPath := *pathFlag
@@ -124,7 +124,7 @@ func main() {
 	// Load applications
 	apps := data.ParseApplications(careerOpsPath)
 	if apps == nil {
-		fmt.Fprintf(os.Stderr, "Error: could not find applications.md in %s or %s/data/\n", careerOpsPath, careerOpsPath)
+		fmt.Fprintf(os.Stderr, "Error: could not find applications.csv or legacy tracker in %s/data/\n", careerOpsPath)
 		os.Exit(1)
 	}
 

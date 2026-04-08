@@ -84,5 +84,5 @@ Cada worker recibe un prompt resuelto desde `batch/batch-prompt.md`. Debe produc
 ## Reglas
 
 - Mantener los estados canonicamente en ingles: `Evaluated`, `Applied`, `Responded`, `Interview`, `Offer`, `Rejected`, `Discarded`, `SKIP`
-- No editar `data/applications.md` directamente para nuevas filas
+- No editar `data/applications.csv` directamente para nuevas filas
 - Si no se puede verificar una oferta con navegador real, marcarla como no confirmada en vez de asumir que sigue abierta

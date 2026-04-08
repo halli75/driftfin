@@ -31,7 +31,7 @@ const isWindows = process.platform === 'win32';
 let stateQueue = Promise.resolve();
 
 function usage() {
-  console.log(`career-ops batch runner
+  console.log(`driftfin batch runner
 
 Usage: node batch/batch-runner.mjs [OPTIONS]
 
@@ -369,7 +369,7 @@ function codexCommandArgs(outputFile) {
 
 function writeLog(logFile, details) {
   const chunks = [
-    `=== career-ops batch worker ===`,
+    `=== driftfin batch worker ===`,
     `timestamp: ${nowIso()}`,
     `command: ${details.command}`,
     `exit_code: ${details.exitCode}`,
@@ -389,8 +389,8 @@ async function runWorker(job) {
   const retries = getRetries(job.id);
   const reportNum = await reserveReportNumber(job.id, job.url, startedAt, retries);
   const date = todayDate();
-  const jdFile = join(os.tmpdir(), `career-ops-batch-jd-${process.pid}-${job.id}.txt`);
-  const outputFile = join(os.tmpdir(), `career-ops-batch-result-${process.pid}-${job.id}.json`);
+  const jdFile = join(os.tmpdir(), `driftfin-batch-jd-${process.pid}-${job.id}.txt`);
+  const outputFile = join(os.tmpdir(), `driftfin-batch-result-${process.pid}-${job.id}.json`);
   const logFile = join(LOGS_DIR, `${reportNum}-${job.id}.log`);
 
   writeFileSync(jdFile, '', 'utf8');

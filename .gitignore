@@ -1,7 +1,11 @@
 # Personal data (user fills these)
 data/applications.md
+data/applications.md.legacy
+data/applications.csv
 data/pipeline.md
 data/scan-history.tsv
+data/credentials.csv
+data/apply-log.csv
 reports/*.md
 !reports/.gitkeep
 output/*
@@ -10,6 +14,7 @@ batch/logs/*
 !batch/logs/.gitkeep
 batch/batch-state.tsv
 batch/batch-input.tsv
+batch/autosubmit-state.tsv
 batch/tracker-additions/*.tsv
 !batch/tracker-additions/.gitkeep
 jds/*

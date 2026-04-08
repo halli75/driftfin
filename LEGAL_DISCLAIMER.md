@@ -2,7 +2,7 @@
 
 ## 1. Nature of the Project
 
-`career-ops` is a collection of Markdown prompts, Node.js scripts, and HTML templates. It is strictly a local execution tool. The maintainers do not host, deploy, or operate an AI system, nor do we provide API access to Large Language Models (LLMs).
+`Driftfin` is a collection of Markdown prompts, Node.js scripts, and HTML templates. It is strictly a local execution tool. The maintainers do not host, deploy, or operate an AI system, nor do we provide API access to Large Language Models (LLMs).
 
 Users download the code, run it on their own machines, and connect it to their own AI provider (Anthropic, OpenAI, or any other). The maintainers have no visibility into, control over, or responsibility for how the tool is used after download.
 
@@ -19,32 +19,32 @@ The maintainers do not act as a Data Controller or Data Processor under GDPR or 
 
 This tool interfaces with AI models via third-party CLI tools. The maintainers do not control these models and cannot guarantee their behavior.
 
-- **Hallucinations:** AI models may fabricate skills, job history, qualifications, or company information. You must manually verify all generated documents before submitting them to an employer.
-- **Safety guardrails:** The default prompts instruct the AI never to auto-submit applications and to stop before the final send/apply action. However, AI compliance is not guaranteed. If you use different models, modify the system prompts, or override the safety instructions, you accept full responsibility for the AI's actions.
+- **Hallucinations:** AI models may fabricate skills, job history, qualifications, or company information. You remain responsible for verifying everything Driftfin sends to an employer.
+- **Safety guardrails:** This fork can be configured to auto-submit applications and create portal credentials. If you enable that behavior, you accept full responsibility for the AI's actions, account creation, and any resulting submissions.
 - **Evaluation accuracy:** Job offer scores and recommendations are AI-generated opinions based on pattern matching, not professional career advice. They should inform your judgment, not replace it.
 
 ## 4. Third-Party Platforms
 
-career-ops interacts with career portals and job boards (Greenhouse, Lever, Ashby, Workday, and others).
+Driftfin interacts with career portals and job boards (Greenhouse, Lever, Ashby, Workday, and others).
 
 - Users must comply with the Terms of Service of every platform they interact with.
 - Do not use this tool to scrape platforms that prohibit automated access.
-- Do not use this tool to spam employers, overwhelm ATS systems, or submit mass applications.
+- Do not use this tool to spam employers, overwhelm ATS systems, or ignore platform anti-bot controls.
 - Any consequences from ToS violations — including IP bans, account restrictions, or legal action from platforms — are solely the responsibility of the user.
 - The maintainers actively reject contributions that facilitate ToS violations (see CONTRIBUTING.md).
 
 ## 5. Acceptable Use
 
-career-ops is designed to help individuals make better career decisions, not to automate away human judgment. Acceptable use includes:
+Driftfin is designed to help individuals make better career decisions, not to automate away human judgment. Acceptable use includes:
 
 - Evaluating job offers to prioritize your time
 - Generating tailored CVs that you review and edit before submitting
 - Scanning public career pages for open positions
 - Tracking your application pipeline
+- Reusing local ATS credentials and logging autosubmit attempts on your machine
 
 Unacceptable use includes:
 
-- Auto-submitting applications without human review
 - Scraping platforms that prohibit automated access
 - Submitting AI-generated content without verifying its accuracy
 - Using the tool to discriminate, deceive, or misrepresent qualifications
@@ -55,7 +55,7 @@ Because this tool runs locally, is free, and is open-source, the maintainers are
 
 ## 7. Indemnification
 
-By using career-ops, you agree to indemnify, defend, and hold harmless the authors, contributors, and any affiliated parties from and against any and all claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising from your use of this software, your violation of these terms, or your violation of any third-party terms of service.
+By using Driftfin, you agree to indemnify, defend, and hold harmless the authors, contributors, and any affiliated parties from and against any and all claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising from your use of this software, your violation of these terms, or your violation of any third-party terms of service.
 
 ## 8. Cost Responsibility
 

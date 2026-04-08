@@ -1,19 +1,19 @@
 cff-version: 1.2.0
-message: "If you use career-ops, please cite it using these metadata."
-title: "Career-Ops: AI-Powered Job Search Pipeline"
+message: "If you use Driftfin, please cite it using these metadata."
+title: "Driftfin: Autonomous Job Discovery, Evaluation, and Application Agent"
 type: software
 authors:
   - family-names: "Fernández de Valderrama"
     given-names: "Santiago"
     website: "https://santifer.io"
 url: "https://santifer.io"
-repository-code: "https://github.com/halli75/career-ops-codex"
+repository-code: "https://github.com/halli75/driftfin"
 license: MIT
 keywords:
   - ai
   - job-search
   - codex
-  - career
+  - driftfin
   - automation
   - llmops
   - go-tui

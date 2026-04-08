@@ -1,6 +1,6 @@
 # Contributing
 
-Career-Ops is maintained as a Codex-first repository. Keep the repo usable from the command line on Windows and Unix-like systems.
+Driftfin is maintained as a Codex-first repository. Keep the repo usable from the command line on Windows and Unix-like systems.
 
 ## Local Workflow
 
@@ -15,7 +15,8 @@ Career-Ops is maintained as a Codex-first repository. Keep the repo usable from 
 
 - Preserve the user/system split defined in `DATA_CONTRACT.md`.
 - Do not put personal data into system files.
-- Never auto-submit applications.
+- Keep autosubmit logic opt-in and local-only.
+- Never expose raw credential values in the dashboard.
 - Keep prompt files vendor-neutral unless they are intentionally Codex-specific.
 - Prefer small, reviewable changes.
 - Update docs and tests when you change workflow assumptions.

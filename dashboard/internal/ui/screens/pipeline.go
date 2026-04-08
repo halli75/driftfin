@@ -9,9 +9,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/santifer/career-ops/dashboard/internal/data"
-	"github.com/santifer/career-ops/dashboard/internal/model"
-	"github.com/santifer/career-ops/dashboard/internal/theme"
+	"github.com/halli75/driftfin/dashboard/internal/data"
+	"github.com/halli75/driftfin/dashboard/internal/model"
+	"github.com/halli75/driftfin/dashboard/internal/theme"
 )
 
 // PipelineClosedMsg is emitted when the pipeline screen is dismissed.
@@ -83,10 +83,10 @@ var pipelineTabs = []pipelineTab{
 
 var sortCycle = []string{sortScore, sortDate, sortCompany, sortStatus}
 
-var statusOptions = []string{"Evaluated", "Applied", "Responded", "Interview", "Offer", "Rejected", "Discarded", "SKIP"}
+var statusOptions = []string{"evaluated", "applied", "responded", "interview", "offer", "rejected", "closed", "duplicate", "blocked", "failed", "skipped"}
 
 // statusGroupOrder defines display order for grouped view.
-var statusGroupOrder = []string{"interview", "offer", "responded", "applied", "evaluated", "skip", "rejected", "discarded"}
+var statusGroupOrder = []string{"interview", "offer", "responded", "applied", "evaluated", "applying", "blocked", "failed", "skip", "closed", "duplicate", "rejected"}
 
 // PipelineModel implements the career pipeline dashboard screen.
 type PipelineModel struct {
@@ -576,6 +576,16 @@ func (m PipelineModel) renderMetrics() string {
 		parts = append(parts, s.Render(fmt.Sprintf("%s:%d", statusLabel(status), count)))
 	}
 
+	if m.metrics.Submitted > 0 {
+		parts = append(parts, lipgloss.NewStyle().Foreground(m.theme.Green).Render(fmt.Sprintf("autosubmit:%d", m.metrics.Submitted)))
+	}
+	if m.metrics.Blocked > 0 {
+		parts = append(parts, lipgloss.NewStyle().Foreground(m.theme.Yellow).Render(fmt.Sprintf("blocked:%d", m.metrics.Blocked)))
+	}
+	if m.metrics.FailedApply > 0 {
+		parts = append(parts, lipgloss.NewStyle().Foreground(m.theme.Red).Render(fmt.Sprintf("apply-fail:%d", m.metrics.FailedApply)))
+	}
+
 	return style.Render(strings.Join(parts, "  "))
 }
 
@@ -729,6 +739,42 @@ func (m PipelineModel) renderPreview() string {
 			lines = append(lines, padStyle.Render(
 				labelStyle.Render("Remote: ")+valueStyle.Render(summary.remote)))
 		}
+	}
+
+	scoreValue := fmt.Sprintf("%.1f", app.Score)
+	if app.Score <= 0 {
+		scoreValue = "-"
+	}
+	gradeValue := app.Grade
+	if gradeValue == "" {
+		gradeValue = "-"
+	}
+	lines = append(lines, padStyle.Render(
+		labelStyle.Render("Score: ")+valueStyle.Render(fmt.Sprintf("%s (%s)", scoreValue, gradeValue))))
+
+	if app.CustomResumePath != "" {
+		lines = append(lines, padStyle.Render(
+			labelStyle.Render("Resume: ")+valueStyle.Render(app.CustomResumePath)))
+	}
+
+	if app.ApplyResult != "" {
+		applyValue := app.ApplyResult
+		if app.ApplyTime != "" {
+			applyValue = fmt.Sprintf("%s @ %s", app.ApplyResult, app.ApplyTime)
+		}
+		lines = append(lines, padStyle.Render(
+			labelStyle.Render("Apply: ")+valueStyle.Render(applyValue)))
+		if app.CredentialAction != "" {
+			lines = append(lines, padStyle.Render(
+				labelStyle.Render("Credential: ")+valueStyle.Render(app.CredentialAction)))
+		}
+		if app.BlockerType != "" {
+			lines = append(lines, padStyle.Render(
+				labelStyle.Render("Blocker: ")+valueStyle.Render(app.BlockerType)))
+		}
+		if app.ApplyNotes != "" {
+			lines = append(lines, padStyle.Render(dimStyle.Render(app.ApplyNotes)))
+		}
 	} else if app.Notes != "" {
 		// Fallback: show notes
 		notes := app.Notes
@@ -760,7 +806,7 @@ func (m PipelineModel) renderHelp() string {
 				keyStyle.Render("Esc") + descStyle.Render(" cancel"))
 	}
 
-	brand := lipgloss.NewStyle().Foreground(m.theme.Overlay).Render("career-ops by santifer.io")
+	brand := lipgloss.NewStyle().Foreground(m.theme.Overlay).Render("driftfin")
 
 	keys := keyStyle.Render("↑↓") + descStyle.Render(" nav  ") +
 		keyStyle.Render("←→") + descStyle.Render(" tabs  ") +
@@ -831,9 +877,13 @@ func (m PipelineModel) statusColorMap() map[string]lipgloss.Color {
 		"applied":   m.theme.Sky,
 		"responded": m.theme.Blue,
 		"evaluated": m.theme.Text,
+		"applying":  m.theme.Yellow,
+		"blocked":   m.theme.Red,
+		"failed":    m.theme.Red,
 		"skip":      m.theme.Red,
 		"rejected":  m.theme.Subtext,
-		"discarded": m.theme.Subtext,
+		"closed":    m.theme.Subtext,
+		"duplicate": m.theme.Subtext,
 	}
 }
 
@@ -859,12 +909,20 @@ func statusLabel(norm string) string {
 		return "Applied"
 	case "evaluated":
 		return "Evaluated"
+	case "applying":
+		return "Applying"
+	case "blocked":
+		return "Blocked"
+	case "failed":
+		return "Failed"
 	case "skip":
 		return "Skip"
+	case "closed":
+		return "Closed"
+	case "duplicate":
+		return "Duplicate"
 	case "rejected":
 		return "Rejected"
-	case "discarded":
-		return "Discarded"
 	default:
 		return norm
 	}

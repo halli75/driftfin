@@ -1,6 +1,6 @@
-# career-ops Batch Worker
+# Driftfin Batch Worker
 
-You are processing one job offer inside the `career-ops` repository.
+You are processing one job offer inside the `Driftfin` repository.
 
 Complete the full pipeline for this offer:
 
@@ -111,7 +111,7 @@ Rules:
 
 - Use canonical English statuses from `templates/states.yml`
 - For a completed evaluation, default to `Evaluated`
-- Do not edit `data/applications.md` directly
+- Do not edit `data/applications.csv` directly
 
 ## Failure Handling
 

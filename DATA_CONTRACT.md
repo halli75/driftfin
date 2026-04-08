@@ -14,9 +14,11 @@ These files contain your personal data, customizations, and work product. Update
 | `article-digest.md` | Your proof points from portfolio |
 | `interview-prep/story-bank.md` | Your accumulated STAR+R stories |
 | `portals.yml` | Your customized company list |
-| `data/applications.md` | Your application tracker |
+| `data/applications.csv` | Your canonical application tracker |
 | `data/pipeline.md` | Your URL inbox |
 | `data/scan-history.tsv` | Your scan history |
+| `data/credentials.csv` | Your local portal credentials ledger |
+| `data/apply-log.csv` | Your autosubmit attempt log |
 | `reports/*` | Your evaluation reports |
 | `output/*` | Your generated PDFs |
 | `jds/*` | Your saved job descriptions |
@@ -47,6 +49,12 @@ These files contain system logic, scripts, templates, and instructions that impr
 | `*.mjs` | Utility scripts |
 | `batch/batch-prompt.md` | Batch worker prompt |
 | `batch/batch-runner.mjs` | Batch orchestrator |
+| `batch/autosubmit-prompt.md` | Autosubmit worker prompt |
+| `batch/autosubmit-runner.mjs` | Autosubmit orchestrator |
+| `autosubmit-state.mjs` | Credential store and autosubmit logging utilities |
+| `applications-store.mjs` | Application CSV store and legacy parsing helpers |
+| `csv-store.mjs` | Locked CSV read/write helpers |
+| `migrate-applications-csv.mjs` | Explicit markdown-to-CSV migration tool |
 | `dashboard/*` | Go TUI dashboard |
 | `templates/*` | Base templates |
 | `fonts/*` | Self-hosted fonts |

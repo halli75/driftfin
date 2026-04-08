@@ -140,7 +140,7 @@ Guardar evaluación completa en `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`.
 
 ### 2. Registrar en tracker
 
-**SIEMPRE** registrar en `data/applications.md`:
+**SIEMPRE** registrar en `data/applications.csv`:
 - Siguiente número secuencial
 - Fecha actual
 - Empresa

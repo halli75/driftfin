@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * update-system.mjs - Safe auto-updater for career-ops
+ * update-system.mjs - Safe auto-updater for Driftfin
  *
  * Updates only system-layer files.
  * Never touches user data such as cv.md, profile.yml, portals.yml, reports, or tracker data.
@@ -35,7 +35,11 @@ const SYSTEM_PATHS = [
   'modes/de/',
   'modes/fr/',
   'generate-pdf.mjs',
+  'csv-store.mjs',
+  'applications-store.mjs',
+  'migrate-applications-csv.mjs',
   'merge-tracker.mjs',
+  'autosubmit-state.mjs',
   'verify-pipeline.mjs',
   'dedup-tracker.mjs',
   'normalize-statuses.mjs',
@@ -45,6 +49,8 @@ const SYSTEM_PATHS = [
   'update-system.mjs',
   'batch/batch-prompt.md',
   'batch/batch-runner.mjs',
+  'batch/autosubmit-prompt.md',
+  'batch/autosubmit-runner.mjs',
   'dashboard/',
   'templates/',
   'fonts/',

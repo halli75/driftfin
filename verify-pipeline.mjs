@@ -1,188 +1,115 @@
 #!/usr/bin/env node
-/**
- * verify-pipeline.mjs — Health check for career-ops pipeline integrity
- *
- * Checks:
- * 1. All statuses are canonical (per states.yml)
- * 2. No duplicate company+role entries
- * 3. All report links point to existing files
- * 4. Scores match format X.XX/5 or N/A or DUP
- * 5. All rows have proper pipe-delimited format
- * 6. No pending TSVs in tracker-additions/ (only in merged/ or archived/)
- * 7. states.yml canonical IDs for cross-system consistency
- *
- * Run: node career-ops/verify-pipeline.mjs
- */
 
-import { readFileSync, readdirSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
+import { existsSync, readdirSync } from 'fs';
+import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import {
+  applicationsCsvPath,
+  canonicalStatus,
+  normalizeCompany,
+  normalizeUrl,
+  parseScoreValue,
+  readApplications,
+  roleMatch,
+} from './applications-store.mjs';
 
-const CAREER_OPS = dirname(fileURLToPath(import.meta.url));
-// Support both layouts: data/applications.md (boilerplate) and applications.md (original)
-const APPS_FILE = existsSync(join(CAREER_OPS, 'data/applications.md'))
-  ? join(CAREER_OPS, 'data/applications.md')
-  : join(CAREER_OPS, 'applications.md');
-const ADDITIONS_DIR = join(CAREER_OPS, 'batch/tracker-additions');
-const REPORTS_DIR = join(CAREER_OPS, 'reports');
-const STATES_FILE = existsSync(join(CAREER_OPS, 'templates/states.yml'))
-  ? join(CAREER_OPS, 'templates/states.yml')
-  : join(CAREER_OPS, 'states.yml');
-
-const CANONICAL_STATUSES = [
-  'evaluada', 'aplicado', 'respondido', 'entrevista',
-  'oferta', 'rechazado', 'descartado', 'no aplicar',
-];
-
-const ALIASES = {
-  'enviada': 'aplicado', 'aplicada': 'aplicado', 'applied': 'aplicado', 'sent': 'aplicado',
-  'cerrada': 'descartado', 'descartada': 'descartado', 'cancelada': 'descartado',
-  'rechazada': 'rechazado',
-  'no_aplicar': 'no aplicar', 'skip': 'no aplicar', 'monitor': 'no aplicar',
-};
+const ROOT = dirname(fileURLToPath(import.meta.url));
+const APPS_FILE = applicationsCsvPath(ROOT);
+const REPORTS_DIR = join(ROOT, 'reports');
+const ADDITIONS_DIR = join(ROOT, 'batch', 'tracker-additions');
 
 let errors = 0;
 let warnings = 0;
 
-function error(msg) { console.log(`❌ ${msg}`); errors++; }
-function warn(msg) { console.log(`⚠️  ${msg}`); warnings++; }
-function ok(msg) { console.log(`✅ ${msg}`); }
-
-// --- Read applications.md ---
-if (!existsSync(APPS_FILE)) {
-  console.log('\n📊 No applications.md found. This is normal for a fresh setup.');
-  console.log('   The file will be created when you evaluate your first offer.\n');
-  process.exit(0);
-}
-const content = readFileSync(APPS_FILE, 'utf-8');
-const lines = content.split('\n');
-
-const entries = [];
-for (const line of lines) {
-  if (!line.startsWith('|')) continue;
-  const parts = line.split('|').map(s => s.trim());
-  if (parts.length < 9) continue;
-  const num = parseInt(parts[1]);
-  if (isNaN(num)) continue;
-  entries.push({
-    num, date: parts[2], company: parts[3], role: parts[4],
-    score: parts[5], status: parts[6], pdf: parts[7], report: parts[8],
-    notes: parts[9] || '',
-  });
+function error(message) {
+  console.log(`ERROR ${message}`);
+  errors += 1;
 }
 
-console.log(`\n📊 Checking ${entries.length} entries in applications.md\n`);
+function warn(message) {
+  console.log(`WARN ${message}`);
+  warnings += 1;
+}
 
-// --- Check 1: Canonical statuses ---
-let badStatuses = 0;
-for (const e of entries) {
-  const clean = e.status.replace(/\*\*/g, '').trim().toLowerCase();
-  // Strip trailing dates
-  const statusOnly = clean.replace(/\s+\d{4}-\d{2}-\d{2}.*$/, '').trim();
+function ok(message) {
+  console.log(`OK ${message}`);
+}
 
-  if (!CANONICAL_STATUSES.includes(statusOnly) && !ALIASES[statusOnly]) {
-    error(`#${e.num}: Non-canonical status "${e.status}"`);
-    badStatuses++;
+function main() {
+  const rows = readApplications(ROOT);
+  if (rows.length === 0) {
+    console.log('No applications found. This is normal for a fresh setup.');
+    return;
   }
 
-  // Check for markdown bold in status
-  if (e.status.includes('**')) {
-    error(`#${e.num}: Status contains markdown bold: "${e.status}"`);
-    badStatuses++;
+  console.log(`Checking ${rows.length} rows in ${existsSync(APPS_FILE) ? 'applications.csv' : 'legacy applications.md'}`);
+
+  let badStatuses = 0;
+  let badScores = 0;
+  let badReports = 0;
+  let duplicates = 0;
+
+  for (const row of rows) {
+    const status = canonicalStatus(row.status);
+    if (![
+      'discovered', 'evaluated', 'applying', 'applied', 'blocked',
+      'failed', 'duplicate', 'closed', 'skipped', 'responded',
+      'interview', 'offer', 'rejected',
+    ].includes(status)) {
+      error(`#${row.application_id}: unknown status "${row.status}"`);
+      badStatuses += 1;
+    }
+
+    if (row.score) {
+      const numeric = parseScoreValue(row.score);
+      if (!Number.isFinite(numeric) || numeric < 0 || numeric > 5) {
+        error(`#${row.application_id}: invalid score "${row.score}"`);
+        badScores += 1;
+      }
+    }
+
+    if (row.report_path) {
+      const reportPath = join(ROOT, row.report_path);
+      if (!existsSync(reportPath)) {
+        error(`#${row.application_id}: missing report ${row.report_path}`);
+        badReports += 1;
+      }
+    }
   }
 
-  // Check for dates in status
-  if (/\d{4}-\d{2}-\d{2}/.test(e.status)) {
-    error(`#${e.num}: Status contains date: "${e.status}" — dates go in date column`);
-    badStatuses++;
-  }
-}
-if (badStatuses === 0) ok('All statuses are canonical');
+  if (badStatuses === 0) ok('All statuses valid');
+  if (badScores === 0) ok('All scores valid');
+  if (badReports === 0) ok('All report paths valid');
 
-// --- Check 2: Duplicates ---
-const companyRoleMap = new Map();
-let dupes = 0;
-for (const e of entries) {
-  const key = e.company.toLowerCase().replace(/[^a-z0-9]/g, '') + '::' +
-    e.role.toLowerCase().replace(/[^a-z0-9 ]/g, '');
-  if (!companyRoleMap.has(key)) companyRoleMap.set(key, []);
-  companyRoleMap.get(key).push(e);
-}
-for (const [key, group] of companyRoleMap) {
-  if (group.length > 1) {
-    warn(`Possible duplicates: ${group.map(e => `#${e.num}`).join(', ')} (${group[0].company} — ${group[0].role})`);
-    dupes++;
+  for (let left = 0; left < rows.length; left += 1) {
+    for (let right = left + 1; right < rows.length; right += 1) {
+      const sameUrl = normalizeUrl(rows[left].url) && normalizeUrl(rows[left].url) === normalizeUrl(rows[right].url);
+      const sameRole = normalizeCompany(rows[left].company) === normalizeCompany(rows[right].company)
+        && roleMatch(rows[left].position, rows[right].position);
+      if (sameUrl || sameRole) {
+        warn(`possible duplicate: #${rows[left].application_id} and #${rows[right].application_id}`);
+        duplicates += 1;
+      }
+    }
   }
-}
-if (dupes === 0) ok('No exact duplicates found');
+  if (duplicates === 0) ok('No duplicates found');
 
-// --- Check 3: Report links ---
-let brokenReports = 0;
-for (const e of entries) {
-  const match = e.report.match(/\]\(([^)]+)\)/);
-  if (!match) continue;
-  const reportPath = join(CAREER_OPS, match[1]);
-  if (!existsSync(reportPath)) {
-    error(`#${e.num}: Report not found: ${match[1]}`);
-    brokenReports++;
-  }
-}
-if (brokenReports === 0) ok('All report links valid');
-
-// --- Check 4: Score format ---
-let badScores = 0;
-for (const e of entries) {
-  const s = e.score.replace(/\*\*/g, '').trim();
-  if (!/^\d+\.?\d*\/5$/.test(s) && s !== 'N/A' && s !== 'DUP') {
-    error(`#${e.num}: Invalid score format: "${e.score}"`);
-    badScores++;
-  }
-}
-if (badScores === 0) ok('All scores valid');
-
-// --- Check 5: Row format ---
-let badRows = 0;
-for (const line of lines) {
-  if (!line.startsWith('|')) continue;
-  if (line.includes('---') || line.includes('Empresa')) continue;
-  const parts = line.split('|');
-  if (parts.length < 9) {
-    error(`Row with <9 columns: ${line.substring(0, 80)}...`);
-    badRows++;
-  }
-}
-if (badRows === 0) ok('All rows properly formatted');
-
-// --- Check 6: Pending TSVs ---
-let pendingTsvs = 0;
-if (existsSync(ADDITIONS_DIR)) {
-  const files = readdirSync(ADDITIONS_DIR).filter(f => f.endsWith('.tsv'));
-  pendingTsvs = files.length;
+  const pendingTsvs = existsSync(ADDITIONS_DIR)
+    ? readdirSync(ADDITIONS_DIR).filter((file) => file.endsWith('.tsv')).length
+    : 0;
   if (pendingTsvs > 0) {
-    warn(`${pendingTsvs} pending TSVs in tracker-additions/ (not merged)`);
+    warn(`${pendingTsvs} pending TSV additions not merged`);
+  } else {
+    ok('No pending TSV additions');
   }
-}
-if (pendingTsvs === 0) ok('No pending TSVs');
 
-// --- Check 7: Bold in scores ---
-let boldScores = 0;
-for (const e of entries) {
-  if (e.score.includes('**')) {
-    warn(`#${e.num}: Score has markdown bold: "${e.score}"`);
-    boldScores++;
-  }
-}
-if (boldScores === 0) ok('No bold in scores');
-
-// --- Summary ---
-console.log('\n' + '='.repeat(50));
-console.log(`📊 Pipeline Health: ${errors} errors, ${warnings} warnings`);
-if (errors === 0 && warnings === 0) {
-  console.log('🟢 Pipeline is clean!');
-} else if (errors === 0) {
-  console.log('🟡 Pipeline OK with warnings');
-} else {
-  console.log('🔴 Pipeline has errors — fix before proceeding');
+  console.log(`Results: ${errors} errors, ${warnings} warnings`);
+  process.exit(errors > 0 ? 1 : 0);
 }
 
-process.exit(errors > 0 ? 1 : 0);
+try {
+  main();
+} catch (error) {
+  console.error(error.message);
+  process.exit(1);
+}

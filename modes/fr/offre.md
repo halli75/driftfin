@@ -149,7 +149,7 @@ Sauvegarder l'evaluation complete dans `reports/{###}-{company-slug}-{YYYY-MM-DD
 
 ### 2. Enregistrer dans le tracker
 
-**TOUJOURS** enregistrer dans `data/applications.md` :
+**TOUJOURS** enregistrer dans `data/applications.csv` :
 - Prochain numero sequentiel
 - Date du jour
 - Entreprise

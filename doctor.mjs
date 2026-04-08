@@ -123,7 +123,7 @@ function checkDirectory(name) {
 }
 
 async function main() {
-  console.log('\ncareer-ops doctor');
+  console.log('\ndriftfin doctor');
   console.log('================\n');
 
   const checks = [

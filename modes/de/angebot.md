@@ -148,7 +148,7 @@ Die vollständige Bewertung in `reports/{###}-{company-slug}-{YYYY-MM-DD}.md` ab
 
 ### 2. Im Tracker eintragen
 
-**IMMER** in `data/applications.md` eintragen:
+**IMMER** in `data/applications.csv` eintragen:
 - Nächste fortlaufende Nummer
 - Aktuelles Datum
 - Firma

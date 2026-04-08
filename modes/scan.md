@@ -52,7 +52,7 @@ Los niveles son aditivos — se ejecutan todos, los resultados se mezclan y dedu
 
 1. **Leer configuración**: `portals.yml`
 2. **Leer historial**: `data/scan-history.tsv` → URLs ya vistas
-3. **Leer dedup sources**: `data/applications.md` + `data/pipeline.md`
+3. **Leer dedup sources**: `data/applications.csv` + `data/pipeline.md`
 
 4. **Nivel 1 — Playwright scan** (paralelo en batches de 3-5):
    Para cada empresa en `tracked_companies` con `enabled: true` y `careers_url` definida:
@@ -86,7 +86,7 @@ Los niveles son aditivos — se ejecutan todos, los resultados se mezclan y dedu
 
 7. **Deduplicar** contra 3 fuentes:
    - `scan-history.tsv` → URL exacta ya vista
-   - `applications.md` → empresa + rol normalizado ya evaluado
+   - `applications.csv` → empresa + rol normalizado ya descubierto/evaluado
    - `pipeline.md` → URL exacta ya en pendientes o procesadas
 
 7.5. **Verificar liveness de resultados de WebSearch (Nivel 3)** — ANTES de añadir a pipeline:
@@ -159,7 +159,7 @@ Nuevas añadidas a pipeline.md: N
   + {company} | {title} | {query_name}
   ...
 
-→ Ejecuta /career-ops pipeline para evaluar las nuevas ofertas.
+→ Ejecuta el flujo de pipeline de Driftfin para evaluar las nuevas ofertas.
 ```
 
 ## Gestión de careers_url

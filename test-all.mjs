@@ -59,10 +59,14 @@ function listFiles(directory = ROOT) {
   return output;
 }
 
-console.log('\ncareer-ops test suite\n');
+console.log('\ndriftfin test suite\n');
 
 console.log('1. Syntax checks');
-for (const file of readdirSync(ROOT).filter((name) => name.endsWith('.mjs'))) {
+for (const file of [
+  ...readdirSync(ROOT).filter((name) => name.endsWith('.mjs')),
+  'batch/batch-runner.mjs',
+  'batch/autosubmit-runner.mjs',
+]) {
   const result = run(process.execPath, ['--check', file]);
   if (result.status === 0) {
     pass(`${file} syntax OK`);
@@ -77,6 +81,8 @@ for (const script of [
   ['normalize-statuses.mjs'],
   ['dedup-tracker.mjs'],
   ['merge-tracker.mjs'],
+  ['migrate-applications-csv.mjs', '--dry-run'],
+  ['autosubmit-state.mjs', 'init'],
   ['update-system.mjs', 'check'],
 ]) {
   const result = run(process.execPath, script);
@@ -116,8 +122,14 @@ for (const file of [
   'modes/oferta.md',
   'modes/pdf.md',
   'modes/scan.md',
+  'autosubmit-state.mjs',
+  'csv-store.mjs',
+  'applications-store.mjs',
+  'migrate-applications-csv.mjs',
   'batch/batch-runner.mjs',
   'batch/batch-prompt.md',
+  'batch/autosubmit-runner.mjs',
+  'batch/autosubmit-prompt.md',
   'templates/states.yml',
   'templates/cv-template.html',
 ]) {

@@ -1,10 +1,10 @@
-# Geteilter Kontext -- career-ops (Deutsch)
+# Geteilter Kontext -- Driftfin (Deutsch)
 
 <!-- ============================================================
      ANPASSEN DIESER DATEI
      ============================================================
-     Diese Datei enthält den geteilten Kontext für alle career-ops-Modi
-     in der deutschen Variante. Bevor du career-ops verwendest, MUSST du:
+     Diese Datei enthält den geteilten Kontext für alle Driftfin-Modi
+     in der deutschen Variante. Bevor du Driftfin verwendest, MUSST du:
      1. config/profile.yml mit deinen persönlichen Daten ausfüllen
      2. cv.md im Projekt-Root anlegen (Lebenslauf in Markdown)
      3. (Optional) article-digest.md mit deinen Proof Points anlegen
@@ -185,7 +185,7 @@ In deutschen Stellenanzeigen und Vertragsverhandlungen tauchen Begriffe auf, die
 7. Direkt und konkret sein — keine Floskeln
 8. Beim Erzeugen deutscher Texte (PDF-Summaries, Bullets, LinkedIn-Nachrichten, STAR-Stories): natürliches Tech-Deutsch, keine wörtliche Übersetzung. Kurze Sätze, aktive Verben, Passiv vermeiden. Fachbegriffe (Stack, Pipeline, Deployment, Embedding) nicht zwanghaft eindeutschen
 8b. **Case-Study-URLs in der PDF Professional Summary:** Wenn das PDF Case Studies oder Demos erwähnt, MÜSSEN die URLs schon im ersten Absatz (Professional Summary) auftauchen. Recruiter lesen oft nur die Summary. Alle URLs im HTML mit `white-space: nowrap`
-9. **Tracker-Einträge als TSV** — `applications.md` NIEMALS direkt für neue Einträge editieren. TSV in `batch/tracker-additions/` schreiben, `merge-tracker.mjs` übernimmt das Mergen
+9. **Tracker-Einträge als TSV** — `data/applications.csv` NIEMALS direkt für neue Einträge editieren. TSV in `batch/tracker-additions/` schreiben, `merge-tracker.mjs` übernimmt das Mergen
 10. **`**URL:**` in jedem Report-Header** — zwischen Score und PDF
 
 ### Tools
@@ -196,6 +196,6 @@ In deutschen Stellenanzeigen und Vertragsverhandlungen tauchen Begriffe auf, die
 | WebFetch | Fallback, um Stellenanzeigen aus statischen Seiten zu extrahieren |
 | Playwright | Prüfen, ob Stellenanzeigen noch aktiv sind (browser_navigate + browser_snapshot), Stellenanzeigen aus SPAs extrahieren. **KRITISCH: NIEMALS 2+ Agenten parallel mit Playwright starten — sie teilen sich eine Browser-Instanz** |
 | Read | cv.md, article-digest.md, cv-template.html |
-| Write | Temporäres HTML für PDF, applications.md, Reports .md |
+| Write | Temporäres HTML für PDF, applications.csv, Reports .md |
 | Edit | Tracker aktualisieren |
 | Bash | `node generate-pdf.mjs` |

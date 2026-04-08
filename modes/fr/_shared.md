@@ -1,10 +1,10 @@
-# Contexte partage -- career-ops (Francais)
+# Contexte partage -- Driftfin (Francais)
 
 <!-- ============================================================
      PERSONNALISATION DE CE FICHIER
      ============================================================
      Ce fichier contient le contexte partage pour tous les modes
-     career-ops en version francaise. Avant d'utiliser career-ops, tu DOIS :
+     Driftfin en version francaise. Avant d'utiliser Driftfin, tu DOIS :
      1. Remplir config/profile.yml avec tes informations personnelles
      2. Creer cv.md a la racine du projet (CV en Markdown)
      3. (Optionnel) Creer article-digest.md avec tes proof points
@@ -189,7 +189,7 @@ Dans les offres et negociations francophones, certains termes n'existent pas sur
 7. Etre direct et concret -- pas de blabla
 8. Francais tech naturel pour les textes generes. Phrases courtes, verbes d'action, eviter le passif. Ne pas traduire de force les termes techniques (stack, pipeline, deployment, embedding)
 8b. **URLs de case studies dans le Professional Summary du PDF :** Si le PDF mentionne des case studies ou demos, les URLs DOIVENT apparaitre dans le premier paragraphe (Professional Summary). Les recruteurs ne lisent souvent que le summary. Toutes les URLs en HTML avec `white-space: nowrap`
-9. **Entrees tracker en TSV** -- NE JAMAIS editer applications.md directement pour de nouveaux ajouts. Ecrire le TSV dans `batch/tracker-additions/`, `merge-tracker.mjs` gere la fusion
+9. **Entrees tracker en TSV** -- NE JAMAIS editer `data/applications.csv` directement pour de nouveaux ajouts. Ecrire le TSV dans `batch/tracker-additions/`, `merge-tracker.mjs` gere la fusion
 10. **`**URL:**` dans chaque en-tete de report** -- entre Score et PDF
 
 ### Outils
@@ -200,6 +200,6 @@ Dans les offres et negociations francophones, certains termes n'existent pas sur
 | WebFetch | Fallback pour extraire les offres depuis des pages statiques |
 | Playwright | Verifier si les offres sont actives (browser_navigate + browser_snapshot), extraire les offres depuis des SPAs. **CRITIQUE : JAMAIS 2+ agents en parallele avec Playwright -- ils partagent la meme instance navigateur** |
 | Read | cv.md, article-digest.md, cv-template.html |
-| Write | HTML temporaire pour PDF, applications.md, reports .md |
+| Write | HTML temporaire pour PDF, applications.csv, reports .md |
 | Edit | Mettre a jour le tracker |
 | Bash | `node generate-pdf.mjs` |

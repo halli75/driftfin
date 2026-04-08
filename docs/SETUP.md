@@ -10,8 +10,8 @@
 ## Setup
 
 ```bash
-git clone https://github.com/halli75/career-ops-codex.git
-cd career-ops
+git clone <your-driftfin-repo-url> driftfin
+cd driftfin
 npm install
 npx playwright install chromium
 ```
@@ -23,6 +23,11 @@ Create these personal files:
 - `cv.md`
 - `modes/_profile.md` from `modes/_profile.template.md` if it does not exist
 - optional `article-digest.md`
+
+If you plan to use autosubmit, the first run will also create:
+
+- `data/credentials.csv`
+- `data/apply-log.csv`
 
 ## Verify
 
@@ -40,3 +45,17 @@ codex
 ```
 
 Then paste a JD URL or ask Codex to process one of the workflows documented in `docs/CODEX_WORKFLOWS.md`.
+
+## Autosubmit
+
+Initialize the local credential and apply logs:
+
+```bash
+npm run autosubmit:init
+```
+
+Preview the evaluated roles that are eligible for autosubmit:
+
+```bash
+npm run autosubmit -- --dry-run
+```

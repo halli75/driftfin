@@ -1,23 +1,25 @@
-# Modo: tracker — Tracker de Aplicaciones
+# Modo: tracker - Tracker de Aplicaciones
 
-Lee y muestra `data/applications.md`.
+Lee y muestra `data/applications.csv`.
 
-**Formato del tracker:**
-```markdown
-| # | Fecha | Empresa | Rol | Score | Estado | PDF | Report |
-```
+Columnas clave:
+- `application_id`
+- `company`
+- `position`
+- `status`
+- `score`
+- `grade`
+- `report_path`
+- `custom_resume_path`
+- `application_successful`
 
-Estados posibles: `Evaluada` → `Aplicado` → `Respondido` → `Contacto` → `Entrevista` → `Oferta` / `Rechazada` / `Descartada` / `NO APLICAR`
+Estados posibles: `discovered` -> `evaluated` -> `applying` -> `applied` / `blocked` / `failed` / `closed` / `duplicate`
 
-- `Aplicado` = el candidato envió su candidatura
-- `Respondido` = Un recruiter/empresa contactó y el candidato respondió (inbound)
-- `Contacto` = El candidato contactó proactivamente a alguien de la empresa (outbound, ej: LinkedIn power move)
+Si el usuario pide actualizar un estado, editar la fila correspondiente en el CSV canonico.
 
-Si el usuario pide actualizar un estado, editar la fila correspondiente.
-
-Mostrar también estadísticas:
+Mostrar tambien estadisticas:
 - Total de aplicaciones
 - Por estado
 - Score promedio
-- % con PDF generado
+- % con CV adaptado
 - % con report generado

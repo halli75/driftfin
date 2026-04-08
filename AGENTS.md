@@ -1,4 +1,4 @@
-# Career-Ops for Codex
+# Driftfin
 
 ## Data Contract
 
@@ -36,7 +36,7 @@ There are two layers in this repo.
 - `package.json`
 - `.github/*`
 
-Rule: when the user asks to personalize career targets, narrative, negotiation posture, filters, or proof points, write to `config/profile.yml`, `modes/_profile.md`, `portals.yml`, or `article-digest.md`. Do not put user-specific content into system files.
+Rule: when the user asks to personalize Driftfin targets, narrative, negotiation posture, filters, or proof points, write to `config/profile.yml`, `modes/_profile.md`, `portals.yml`, or `article-digest.md`. Do not put user-specific content into system files.
 
 ## Update Check
 
@@ -67,7 +67,7 @@ Work in this order:
 1. Create `cv.md` from the user's resume, LinkedIn, or dictated background.
 2. Ensure `config/profile.yml` contains identity, location, target roles, and comp targets.
 3. Create `portals.yml` from `templates/portals.example.yml` and customize role filters.
-4. If `data/applications.md` is missing, create the tracker table.
+4. If `data/applications.csv` is missing, create the tracker CSV.
 5. Ask for higher-signal personalization: superpowers, deal-breakers, best achievement, published work, and preferred role types.
 
 Store user-specific learnings in user-layer files so later system updates do not overwrite them.
@@ -84,7 +84,7 @@ Choose a mode from the user's request:
 | Deep company research | `modes/deep.md` |
 | Generate tailored PDF | `modes/pdf.md` |
 | Outreach/contact plan | `modes/contacto.md` |
-| Application assistant | `modes/apply.md` |
+| Application assistant or autosubmit | `modes/apply.md` |
 | Portal scan | `modes/scan.md` |
 | Process inbox URLs | `modes/pipeline.md` |
 | Batch processing | `modes/batch.md` |
@@ -107,10 +107,13 @@ Common changes:
 
 ## Ethical Use
 
-- Never submit an application without the user reviewing it first.
-- Strongly discourage low-fit applications. Below `4.0/5`, recommend against applying unless the user has a specific override reason.
-- Do not fabricate experience, metrics, dates, or credentials.
-- Quality beats volume. Optimize for high-fit applications, not spam.
+- Autosubmit is opt-in and controlled from `config/profile.yml`.
+- If autosubmit is enabled, do not wait for a final human confirmation before submitting.
+- Do not fabricate experience, metrics, dates, qualifications, or application answers.
+- For normal evaluation flows, strongly discourage low-fit applications below `4.0/5`.
+- In autosubmit mode, only submit rows whose `score` is greater than or equal to `automation.autosubmit.minimum_score` in `config/profile.yml`.
+- Prefer AgentMail for new ATS accounts and email verification when it is configured. Otherwise fall back to the candidate email.
+- Stop for CAPTCHA, MFA, or similar hard manual gates. Log the blocker and leave the tracker status unchanged.
 
 ## Offer Verification
 
@@ -126,10 +129,10 @@ If browser automation is unavailable in a specific workflow, mark verification a
 ## Pipeline Integrity
 
 Rules:
-- Do not add new tracker rows directly into `data/applications.md`.
+- `data/applications.csv` is the canonical tracker.
 - Write one TSV addition per evaluation into `batch/tracker-additions/`.
-- `merge-tracker.mjs` performs the merge.
-- You may update existing tracker rows in `data/applications.md` for status or notes corrections.
+- `merge-tracker.mjs` performs the merge into `data/applications.csv`.
+- Use `migrate-applications-csv.mjs --dry-run` before any legacy markdown migration.
 - Every report must include `**URL:**` in the header.
 
 ## TSV Format
@@ -155,21 +158,29 @@ Status must use canonical labels from `templates/states.yml`.
 
 ## Canonical States
 
-Use exactly these labels:
-- `Evaluated`
-- `Applied`
-- `Responded`
-- `Interview`
-- `Offer`
-- `Rejected`
-- `Discarded`
-- `SKIP`
+CSV lifecycle states:
+- `discovered`
+- `evaluated`
+- `applying`
+- `applied`
+- `blocked`
+- `failed`
+- `duplicate`
+- `closed`
+- `skipped`
+- `responded`
+- `interview`
+- `offer`
+- `rejected`
 
 No markdown, no dates, and no extra commentary in the status field.
 
 ## Operating Rules
 
 - Read `cv.md`, `config/profile.yml`, `modes/_profile.md`, and `article-digest.md` when relevant.
+- Before any autosubmit run, initialize `data/applications.csv`, `data/credentials.csv`, and `data/apply-log.csv` with `node autosubmit-state.mjs init`.
+- Use `data/credentials.csv` as the local credential ledger and `data/apply-log.csv` as the local submission log.
+- `data/applications.csv` must include `score` and `grade`; evaluation updates both.
 - Do not hardcode proof-point metrics. Read them from source files at evaluation time.
 - Generate candidate-facing output in the language of the JD unless the user says otherwise.
 - Keep writing direct and concrete.

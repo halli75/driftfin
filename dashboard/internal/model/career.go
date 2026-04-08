@@ -3,13 +3,16 @@ package model
 // CareerApplication represents a single job application from the tracker.
 type CareerApplication struct {
 	Number       int
+	ApplicationID string
 	Date         string
 	Company      string
 	Role         string
 	Status       string
 	Score        float64
 	ScoreRaw     string
+	Grade        string
 	HasPDF       bool
+	CustomResumePath string
 	ReportPath   string
 	ReportNumber string
 	Notes        string
@@ -19,6 +22,12 @@ type CareerApplication struct {
 	TlDr         string
 	Remote       string
 	CompEstimate string
+	ApplyResult  string
+	ApplyTime    string
+	BlockerType  string
+	CredentialID string
+	CredentialAction string
+	ApplyNotes   string
 }
 
 // PipelineMetrics holds aggregate stats for the pipeline dashboard.
@@ -29,4 +38,7 @@ type PipelineMetrics struct {
 	TopScore   float64
 	WithPDF    int
 	Actionable int
+	Submitted  int
+	Blocked    int
+	FailedApply int
 }
