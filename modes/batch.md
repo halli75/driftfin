@@ -1,16 +1,16 @@
-# Modo: batch - Procesamiento Masivo de Ofertas
+# Mode: batch - Batch Job Processing
 
-Este modo cubre dos caminos:
+This mode covers two paths:
 
-1. **Conductor interactivo**: el usuario navega portales y Codex va acumulando URLs.
-2. **Script standalone**: `batch/batch-runner.mjs` procesa `batch-input.tsv` con workers de `codex exec`.
+1. **Interactive conductor**: the user navigates portals and Codex accumulates URLs.
+2. **Standalone script**: `batch/batch-runner.mjs` processes `batch-input.tsv` with `codex exec` workers.
 
-## Arquitectura
+## Architecture
 
 ```text
 Codex conductor
   |
-  | lee portales o input ya reunido
+  | reads portals or pre-gathered input
   |
   +-> batch-input.tsv
   +-> batch/batch-runner.mjs
@@ -22,10 +22,10 @@ Codex conductor
                 +-> report .md
                 +-> PDF
                 +-> tracker line TSV
-                +-> JSON final
+                +-> final JSON
 ```
 
-## Archivos
+## Files
 
 ```text
 batch/
@@ -37,52 +37,52 @@ batch/
   tracker-additions/
 ```
 
-## Flujo
+## Flow
 
-1. Leer `batch/batch-state.tsv` para saber que ya se proceso.
-2. Para cada URL pendiente:
-   - capturar o reutilizar JD
-   - reservar `report_num`
-   - resolver placeholders en `batch/batch-prompt.md`
-   - ejecutar un worker con `codex exec`
-   - guardar log y JSON final
-   - actualizar `batch-state.tsv`
-3. Al final:
-   - correr `node merge-tracker.mjs`
-   - correr `node verify-pipeline.mjs`
-   - mostrar resumen
+1. Read `batch/batch-state.tsv` to see what has already been processed.
+2. For each pending URL:
+   - capture or reuse JD
+   - reserve `report_num`
+   - resolve placeholders in `batch/batch-prompt.md`
+   - run a worker with `codex exec`
+   - save log and final JSON
+   - update `batch-state.tsv`
+3. At the end:
+   - run `node merge-tracker.mjs`
+   - run `node verify-pipeline.mjs`
+   - show summary
 
-## Script Standalone
+## Standalone Script
 
 ```bash
 node batch/batch-runner.mjs [OPTIONS]
 ```
 
-Opciones:
+Options:
 - `--dry-run`
 - `--retry-failed`
 - `--start-from N`
 - `--parallel N`
 - `--max-retries N`
 
-## Estado y Resumabilidad
+## State and Resumability
 
-- `batch-state.tsv` es la fuente de verdad para progreso y retries.
-- Si el proceso muere, se puede re-ejecutar y saltar ofertas completadas.
-- Un lock file evita ejecuciones dobles del batch runner.
-- Cada worker es independiente.
+- `batch-state.tsv` is the source of truth for progress and retries.
+- If the process dies, it can be re-run and will skip completed postings.
+- A lock file prevents double execution of the batch runner.
+- Each worker is independent.
 
 ## Workers
 
-Cada worker recibe un prompt resuelto desde `batch/batch-prompt.md`. Debe producir:
+Each worker receives a resolved prompt from `batch/batch-prompt.md`. It must produce:
 
-1. un report en `reports/`
-2. un PDF en `output/`
-3. una linea TSV en `batch/tracker-additions/`
-4. un JSON final que el runner pueda parsear
+1. a report in `reports/`
+2. a PDF in `output/`
+3. a TSV line in `batch/tracker-additions/`
+4. a final JSON that the runner can parse
 
-## Reglas
+## Rules
 
-- Mantener los estados canonicamente en ingles: `Evaluated`, `Applied`, `Responded`, `Interview`, `Offer`, `Rejected`, `Discarded`, `SKIP`
-- No editar `data/applications.csv` directamente para nuevas filas
-- Si no se puede verificar una oferta con navegador real, marcarla como no confirmada en vez de asumir que sigue abierta
+- Use canonical English status labels: `evaluated`, `applied`, `responded`, `interview`, `offer`, `rejected`, `closed`, `skipped`
+- Do not edit `data/applications.csv` directly for new rows
+- If a posting cannot be verified with a real browser, mark it as unconfirmed instead of assuming it is still open

@@ -19,27 +19,28 @@ const SYSTEM_PATHS = [
   'AGENTS.md',
   'modes/_shared.md',
   'modes/_profile.template.md',
-  'modes/oferta.md',
+  'modes/evaluate.md',
   'modes/pdf.md',
   'modes/scan.md',
   'modes/batch.md',
   'modes/apply.md',
   'modes/auto-pipeline.md',
-  'modes/contacto.md',
+  'modes/outreach.md',
   'modes/deep.md',
-  'modes/ofertas.md',
+  'modes/compare.md',
   'modes/pipeline.md',
   'modes/project.md',
   'modes/tracker.md',
   'modes/training.md',
-  'modes/de/',
-  'modes/fr/',
   'generate-pdf.mjs',
   'csv-store.mjs',
   'applications-store.mjs',
   'migrate-applications-csv.mjs',
   'merge-tracker.mjs',
   'autosubmit-state.mjs',
+  'agentmail-state.mjs',
+  'agentmail-client.mjs',
+  'profile-config.mjs',
   'verify-pipeline.mjs',
   'dedup-tracker.mjs',
   'normalize-statuses.mjs',
@@ -118,7 +119,7 @@ function normalizeRepoUrl(url) {
 }
 
 function resolvedRepoInfo() {
-  const override = process.env.CAREER_OPS_UPSTREAM;
+  const override = process.env.DRIFTFIN_UPSTREAM;
   const originUrl = override || git('remote get-url origin');
   const parsed = normalizeRepoUrl(originUrl);
   if (!parsed) {
@@ -195,7 +196,7 @@ async function check() {
 async function apply() {
   const repo = resolvedRepoInfo();
   if (!repo) {
-    console.error('Cannot resolve update source. Set CAREER_OPS_UPSTREAM or configure git origin.');
+    console.error('Cannot resolve update source. Set DRIFTFIN_UPSTREAM or configure git origin.');
     process.exit(1);
   }
 

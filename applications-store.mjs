@@ -130,18 +130,17 @@ export function canonicalStatus(raw) {
   const status = text.replace(/\s+\d{4}-\d{2}-\d{2}.*$/, '').trim();
 
   if (!status) return 'discovered';
-  if (status.includes('closed')) return 'closed';
+  if (status.includes('closed') || status.includes('discard')) return 'closed';
   if (status.includes('duplicate')) return 'duplicate';
   if (status.includes('blocked')) return 'blocked';
   if (status.includes('failed')) return 'failed';
-  if (status.includes('applied') || status.includes('aplicad') || status === 'sent') return 'applied';
+  if (status.includes('applied') || status === 'sent') return 'applied';
   if (status.includes('respond')) return 'responded';
-  if (status.includes('interview') || status.includes('entrevista')) return 'interview';
-  if (status.includes('offer') || status.includes('oferta')) return 'offer';
-  if (status.includes('reject') || status.includes('rechaz')) return 'rejected';
-  if (status.includes('discard') || status.includes('descart') || status.includes('cerrada') || status.includes('cancelada')) return 'closed';
-  if (status.includes('skip') || status.includes('no aplicar') || status.includes('no_aplicar')) return 'skipped';
-  if (status.includes('evaluated') || status.includes('evaluada') || status === 'condicional' || status === 'hold' || status === 'monitor' || status === 'evaluar' || status === 'verificar') return 'evaluated';
+  if (status.includes('interview')) return 'interview';
+  if (status.includes('offer')) return 'offer';
+  if (status.includes('reject')) return 'rejected';
+  if (status.includes('skip')) return 'skipped';
+  if (status.includes('evaluated') || status === 'hold' || status === 'monitor') return 'evaluated';
   if (status === 'applying') return 'applying';
   return status;
 }

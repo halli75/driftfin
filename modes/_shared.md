@@ -29,7 +29,7 @@ The evaluation uses 6 blocks (A-F) with a global score of 1-5:
 
 | Dimension | What it measures |
 |-----------|-----------------|
-| Match con CV | Skills, experience, proof points alignment |
+| CV Match | Skills, experience, proof points alignment |
 | North Star alignment | How well the role fits the user's target archetypes (from _profile.md) |
 | Comp | Salary vs market (5=top quartile, 1=well below) |
 | Cultural signals | Company culture, growth, stability, remote policy |
@@ -86,6 +86,7 @@ After detecting archetype, read `modes/_profile.md` for the user's specific fram
 9. **Tracker additions as TSV** -- NEVER edit `data/applications.csv` directly from evaluation workers. Write TSV in `batch/tracker-additions/`; `merge-tracker.mjs` merges into the CSV tracker.
 10. **Include `**URL:**` in every report header.**
 11. In autosubmit mode, use `node autosubmit-state.mjs` for credential reuse, credential rotation, apply logging, and tracker note updates.
+12. If AgentMail is enabled, use `node agentmail-state.mjs` for shared inbox setup and verification polling.
 
 ### Tools
 

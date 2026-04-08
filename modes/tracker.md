@@ -1,8 +1,8 @@
-# Modo: tracker - Tracker de Aplicaciones
+# Mode: tracker - Application Tracker
 
-Lee y muestra `data/applications.csv`.
+Read and display `data/applications.csv`.
 
-Columnas clave:
+Key columns:
 - `application_id`
 - `company`
 - `position`
@@ -13,13 +13,13 @@ Columnas clave:
 - `custom_resume_path`
 - `application_successful`
 
-Estados posibles: `discovered` -> `evaluated` -> `applying` -> `applied` / `blocked` / `failed` / `closed` / `duplicate`
+Status lifecycle: `discovered` → `evaluated` → `applying` → `applied` / `blocked` / `failed` / `closed` / `duplicate`
 
-Si el usuario pide actualizar un estado, editar la fila correspondiente en el CSV canonico.
+If the user asks to update a status, edit the corresponding row in the canonical CSV.
 
-Mostrar tambien estadisticas:
-- Total de aplicaciones
-- Por estado
-- Score promedio
-- % con CV adaptado
-- % con report generado
+Also show statistics:
+- Total applications
+- By status
+- Average score
+- % with tailored CV
+- % with generated report

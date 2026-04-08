@@ -8,7 +8,7 @@
 - `data/applications.csv` is the canonical application tracker.
 - Batch evaluation runs through `codex exec`.
 - Autosubmit is implemented and uses local credential and attempt logs.
-- AgentMail is optional and recommended for agent-managed inboxes, but full inbox polling and OTP/link handling are not fully implemented yet.
+- AgentMail is optional and recommended for agent-managed inboxes. Shared inbox provisioning, polling, and OTP/link extraction are implemented through a local CLI.
 
 Treat this repo as a strong prototype, not a fully polished one-click apply system.
 
@@ -50,6 +50,7 @@ Initialize and verify:
 ```bash
 npm run doctor
 npm run autosubmit:init
+npm run agentmail:status
 ```
 
 ## AgentMail Setup
@@ -69,13 +70,15 @@ automation:
   email:
     preferred_provider: "agentmail"
     verification_timeout_seconds: 180
+    poll_interval_seconds: 5
     agentmail:
       enabled: true
       api_key_env: "AGENTMAIL_API_KEY"
       inbox_domain: ""
+      shared_inbox_username: "my-driftfin"
 ```
 
-Current limitation: the repo is config-wired to prefer AgentMail, but it does not yet include a dedicated local helper that fully automates inbox polling, OTP extraction, and verification-link handling in every flow.
+When enabled, Driftfin creates or reuses one shared AgentMail inbox, stores the local inbox state in `data/agentmail-state.json`, and polls that inbox during verification steps.
 
 ## How To Run It
 
@@ -105,6 +108,7 @@ If you want to inspect the repo state without entering Codex:
 ```bash
 npm run doctor
 npm run verify
+npm run agentmail:status
 npm run batch -- --dry-run
 npm run autosubmit -- --dry-run
 ```
@@ -208,6 +212,7 @@ Main statuses:
 
 - `data/credentials.csv`: local credential store for ATS logins; contains raw passwords and must stay local
 - `data/apply-log.csv`: append-only submission attempt log, including result and `duration_seconds`
+- `data/agentmail-state.json`: local shared inbox metadata and poll cursor state
 
 Passwords are intentionally kept out of `data/applications.csv`.
 
@@ -227,7 +232,7 @@ Passwords are intentionally kept out of `data/applications.csv`.
 - Autosubmit is not equally reliable across all ATS platforms.
 - CAPTCHA, MFA, some email verification flows, and unusual form logic can block automation.
 - Workday accounts often need to be scoped per company tenant.
-- AgentMail is only partially integrated today.
+- AgentMail uses one shared inbox, so concurrent verification emails rely on timestamp and content matching.
 - The dashboard was updated for CSV-first tracking, but if your local Go toolchain is missing you will need to install Go to build or run it.
 
 ## Useful Commands
@@ -241,6 +246,7 @@ npm run merge
 npm run batch -- --dry-run
 npm run batch -- --parallel 1
 npm run autosubmit:init
+npm run agentmail:status
 npm run autosubmit -- --dry-run
 npm run autosubmit -- --parallel 1
 npm run migrate:applications
@@ -252,7 +258,3 @@ codex
 - `docs/SETUP.md`
 - `docs/ARCHITECTURE.md`
 - `docs/CODEX_WORKFLOWS.md`
-
-## Resumen En Espanol
-
-Driftfin para Codex te ayuda a buscar ofertas, evaluarlas, generar CVs adaptados, guardar el pipeline en CSV y ejecutar autosubmit local. El tracker canonico es `data/applications.csv`, las credenciales viven en `data/credentials.csv`, y los intentos de aplicacion viven en `data/apply-log.csv`. AgentMail es opcional y recomendado, pero su automatizacion todavia no esta completa.

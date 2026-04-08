@@ -15,28 +15,28 @@ import (
 
 var (
 	reScoreValue     = regexp.MustCompile(`(\d+\.?\d*)`)
-	reArchetype      = regexp.MustCompile(`(?i)\*\*Arquetipo(?:\s+detectado)?\*\*\s*\|\s*(.+)`)
+	reArchetype      = regexp.MustCompile(`(?i)\*\*(?:Archetype|Arquetipo)(?:\s+(?:detected|detectado))?\*\*\s*\|\s*(.+)`)
 	reTlDr           = regexp.MustCompile(`(?i)\*\*TL;DR\*\*\s*\|\s*(.+)`)
 	reTlDrColon      = regexp.MustCompile(`(?i)\*\*TL;DR:\*\*\s*(.+)`)
 	reRemote         = regexp.MustCompile(`(?i)\*\*Remote\*\*\s*\|\s*(.+)`)
 	reComp           = regexp.MustCompile(`(?i)\*\*Comp\*\*\s*\|\s*(.+)`)
-	reArchetypeColon = regexp.MustCompile(`(?i)\*\*Arquetipo:\*\*\s*(.+)`)
+	reArchetypeColon = regexp.MustCompile(`(?i)\*\*(?:Archetype|Arquetipo):\*\*\s*(.+)`)
 )
 
 // ParseApplications reads applications.csv and falls back to legacy applications.md.
-func ParseApplications(careerOpsPath string) []model.CareerApplication {
-	if apps := parseApplicationsCSV(careerOpsPath); len(apps) > 0 {
-		enrichFromApplyLog(careerOpsPath, apps)
+func ParseApplications(repoPath string) []model.CareerApplication {
+	if apps := parseApplicationsCSV(repoPath); len(apps) > 0 {
+		enrichFromApplyLog(repoPath, apps)
 		return apps
 	}
 
-	apps := parseLegacyApplicationsMarkdown(careerOpsPath)
-	enrichFromApplyLog(careerOpsPath, apps)
+	apps := parseLegacyApplicationsMarkdown(repoPath)
+	enrichFromApplyLog(repoPath, apps)
 	return apps
 }
 
-func parseApplicationsCSV(careerOpsPath string) []model.CareerApplication {
-	filePath := filepath.Join(careerOpsPath, "data", "applications.csv")
+func parseApplicationsCSV(repoPath string) []model.CareerApplication {
+	filePath := filepath.Join(repoPath, "data", "applications.csv")
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil
@@ -98,11 +98,11 @@ func parseApplicationsCSV(careerOpsPath string) []model.CareerApplication {
 	return apps
 }
 
-func parseLegacyApplicationsMarkdown(careerOpsPath string) []model.CareerApplication {
-	filePath := filepath.Join(careerOpsPath, "data", "applications.md")
+func parseLegacyApplicationsMarkdown(repoPath string) []model.CareerApplication {
+	filePath := filepath.Join(repoPath, "data", "applications.md")
 	content, err := os.ReadFile(filePath)
 	if err != nil {
-		filePath = filepath.Join(careerOpsPath, "applications.md")
+		filePath = filepath.Join(repoPath, "applications.md")
 		content, err = os.ReadFile(filePath)
 		if err != nil {
 			return nil
@@ -146,18 +146,18 @@ func parseLegacyApplicationsMarkdown(careerOpsPath string) []model.CareerApplica
 		}
 
 		apps = append(apps, model.CareerApplication{
-			Number:       number,
+			Number:        number,
 			ApplicationID: fields[0],
-			Date:         fields[1],
-			Company:      fields[2],
-			Role:         fields[3],
-			Status:       fields[5],
-			Score:        score,
-			ScoreRaw:     fields[4],
-			HasPDF:       strings.Contains(fields[6], ".pdf"),
-			ReportPath:   reportPath,
-			ReportNumber: reportNumber,
-			Notes:        fieldOr(fields, 8),
+			Date:          fields[1],
+			Company:       fields[2],
+			Role:          fields[3],
+			Status:        fields[5],
+			Score:         score,
+			ScoreRaw:      fields[4],
+			HasPDF:        strings.Contains(fields[6], ".pdf"),
+			ReportPath:    reportPath,
+			ReportNumber:  reportNumber,
+			Notes:         fieldOr(fields, 8),
 		})
 	}
 	return apps
@@ -170,8 +170,8 @@ func fieldOr(fields []string, index int) string {
 	return fields[index]
 }
 
-func enrichFromApplyLog(careerOpsPath string, apps []model.CareerApplication) {
-	logPath := filepath.Join(careerOpsPath, "data", "apply-log.csv")
+func enrichFromApplyLog(repoPath string, apps []model.CareerApplication) {
+	logPath := filepath.Join(repoPath, "data", "apply-log.csv")
 	content, err := os.ReadFile(logPath)
 	if err != nil {
 		return
@@ -300,19 +300,19 @@ func ComputeMetrics(apps []model.CareerApplication) model.PipelineMetrics {
 func NormalizeStatus(raw string) string {
 	s := strings.TrimSpace(strings.ToLower(raw))
 	switch {
-	case strings.Contains(s, "no aplicar") || strings.Contains(s, "no_aplicar") || s == "skip" || strings.Contains(s, "skipped"):
+	case s == "skip" || strings.Contains(s, "skipped"):
 		return "skip"
-	case strings.Contains(s, "interview") || strings.Contains(s, "entrevista"):
+	case strings.Contains(s, "interview"):
 		return "interview"
-	case strings.Contains(s, "offer") || strings.Contains(s, "oferta"):
+	case strings.Contains(s, "offer"):
 		return "offer"
 	case strings.Contains(s, "respond"):
 		return "responded"
-	case strings.Contains(s, "applied") || strings.Contains(s, "aplicado"):
+	case strings.Contains(s, "applied"):
 		return "applied"
-	case strings.Contains(s, "rejected") || strings.Contains(s, "rechazado"):
+	case strings.Contains(s, "rejected"):
 		return "rejected"
-	case strings.Contains(s, "closed") || strings.Contains(s, "discarded") || strings.Contains(s, "descartado"):
+	case strings.Contains(s, "closed") || strings.Contains(s, "discarded"):
 		return "closed"
 	case strings.Contains(s, "duplicate"):
 		return "duplicate"
@@ -322,7 +322,7 @@ func NormalizeStatus(raw string) string {
 		return "failed"
 	case strings.Contains(s, "applying"):
 		return "applying"
-	case strings.Contains(s, "evaluated") || strings.Contains(s, "evaluada"):
+	case strings.Contains(s, "evaluated"):
 		return "evaluated"
 	default:
 		return s
@@ -330,8 +330,8 @@ func NormalizeStatus(raw string) string {
 }
 
 // LoadReportSummary extracts key fields from a report file.
-func LoadReportSummary(careerOpsPath, reportPath string) (archetype, tldr, remote, comp string) {
-	fullPath := filepath.Join(careerOpsPath, reportPath)
+func LoadReportSummary(repoPath, reportPath string) (archetype, tldr, remote, comp string) {
+	fullPath := filepath.Join(repoPath, reportPath)
 	content, err := os.ReadFile(fullPath)
 	if err != nil {
 		return
@@ -361,8 +361,8 @@ func LoadReportSummary(careerOpsPath, reportPath string) (archetype, tldr, remot
 }
 
 // UpdateApplicationStatus updates the status of an application in applications.csv.
-func UpdateApplicationStatus(careerOpsPath string, app model.CareerApplication, newStatus string) error {
-	filePath := filepath.Join(careerOpsPath, "data", "applications.csv")
+func UpdateApplicationStatus(repoPath string, app model.CareerApplication, newStatus string) error {
+	filePath := filepath.Join(repoPath, "data", "applications.csv")
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return err

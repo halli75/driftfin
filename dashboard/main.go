@@ -22,10 +22,10 @@ const (
 )
 
 type appModel struct {
-	pipeline      screens.PipelineModel
-	viewer        screens.ViewerModel
-	state         viewState
-	careerOpsPath string
+	pipeline screens.PipelineModel
+	viewer   screens.ViewerModel
+	state    viewState
+	repoPath string
 }
 
 func (m appModel) Init() tea.Cmd {
@@ -47,21 +47,21 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 
 	case screens.PipelineLoadReportMsg:
-		archetype, tldr, remote, comp := data.LoadReportSummary(msg.CareerOpsPath, msg.ReportPath)
+		archetype, tldr, remote, comp := data.LoadReportSummary(msg.RepoPath, msg.ReportPath)
 		m.pipeline.EnrichReport(msg.ReportPath, archetype, tldr, remote, comp)
 		return m, nil
 
 	case screens.PipelineUpdateStatusMsg:
-		err := data.UpdateApplicationStatus(msg.CareerOpsPath, msg.App, msg.NewStatus)
+		err := data.UpdateApplicationStatus(msg.RepoPath, msg.App, msg.NewStatus)
 		if err != nil {
 			return m, nil
 		}
-		apps := data.ParseApplications(m.careerOpsPath)
+		apps := data.ParseApplications(m.repoPath)
 		metrics := data.ComputeMetrics(apps)
 		old := m.pipeline
 		m.pipeline = screens.NewPipelineModel(
 			theme.NewTheme("catppuccin-mocha"),
-			apps, metrics, m.careerOpsPath,
+			apps, metrics, m.repoPath,
 			old.Width(), old.Height(),
 		)
 		m.pipeline.CopyReportCache(&old)
@@ -119,12 +119,12 @@ func main() {
 	pathFlag := flag.String("path", ".", "Path to Driftfin directory")
 	flag.Parse()
 
-	careerOpsPath := *pathFlag
+	repoPath := *pathFlag
 
 	// Load applications
-	apps := data.ParseApplications(careerOpsPath)
+	apps := data.ParseApplications(repoPath)
 	if apps == nil {
-		fmt.Fprintf(os.Stderr, "Error: could not find applications.csv or legacy tracker in %s/data/\n", careerOpsPath)
+		fmt.Fprintf(os.Stderr, "Error: could not find applications.csv or legacy tracker in %s/data/\n", repoPath)
 		os.Exit(1)
 	}
 
@@ -133,21 +133,21 @@ func main() {
 
 	// Batch-load all report summaries
 	t := theme.NewTheme("catppuccin-mocha")
-	pm := screens.NewPipelineModel(t, apps, metrics, careerOpsPath, 120, 40)
+	pm := screens.NewPipelineModel(t, apps, metrics, repoPath, 120, 40)
 
 	for _, app := range apps {
 		if app.ReportPath == "" {
 			continue
 		}
-		archetype, tldr, remote, comp := data.LoadReportSummary(careerOpsPath, app.ReportPath)
+		archetype, tldr, remote, comp := data.LoadReportSummary(repoPath, app.ReportPath)
 		if archetype != "" || tldr != "" || remote != "" || comp != "" {
 			pm.EnrichReport(app.ReportPath, archetype, tldr, remote, comp)
 		}
 	}
 
 	m := appModel{
-		pipeline:      pm,
-		careerOpsPath: careerOpsPath,
+		pipeline: pm,
+		repoPath: repoPath,
 	}
 
 	p := tea.NewProgram(m, tea.WithAltScreen())
