@@ -557,7 +557,7 @@ function recordApplyOutcome(app, payload, durationSeconds) {
   runStateCommand(trackerArgs);
 }
 
-function prepareAgentMail(settings, dryRun) {
+function prepareAgentMail(settings) {
   if (!settings.agentmail.enabled) {
     return {
       enabled: false,
@@ -565,16 +565,6 @@ function prepareAgentMail(settings, dryRun) {
       provider: 'candidate',
       verificationTimeoutSeconds: 180,
       pollIntervalSeconds: 5,
-    };
-  }
-
-  if (dryRun) {
-    return {
-      enabled: true,
-      loginEmail: settings.baseEmail,
-      provider: 'agentmail',
-      verificationTimeoutSeconds: settings.agentmail.verificationTimeoutSeconds,
-      pollIntervalSeconds: settings.agentmail.pollIntervalSeconds,
     };
   }
 
@@ -801,7 +791,7 @@ async function main() {
 
   acquireRunnerLock();
   try {
-    const agentmail = prepareAgentMail(settings, false);
+    const agentmail = prepareAgentMail(settings);
     const runtime = {
       baseEmail: settings.baseEmail,
       loginEmail: agentmail.loginEmail || settings.baseEmail,

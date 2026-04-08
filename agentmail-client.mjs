@@ -10,8 +10,7 @@ import { getAgentMailSettings } from './profile-config.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
-const DATA_DIR = join(ROOT, 'data');
-const STATE_FILE = join(DATA_DIR, 'agentmail-state.json');
+const VERIFICATION_TEXT_RE = /(verify|verification|confirm|security|otp|passcode|code|sign in|signin|activate|login)/i;
 
 function ensureParentDir(path) {
   mkdirSync(dirname(path), { recursive: true });
@@ -177,17 +176,24 @@ function extractLinks(text) {
   return [...String(text ?? '').matchAll(/https?:\/\/[^\s<>"')]+/gi)].map((match) => match[0]);
 }
 
+function looksLikeVerificationText(text) {
+  return VERIFICATION_TEXT_RE.test(String(text ?? ''));
+}
+
 function findOtp(text) {
-  const patterns = [
-    /\b(?:code|otp|verification|verify|security|passcode)[^0-9]{0,20}(\d{4,8})\b/i,
-    /\b(\d{6})\b/,
-    /\b(\d{4,8})\b/,
-  ];
-  for (const pattern of patterns) {
-    const match = String(text ?? '').match(pattern);
-    if (match) {
-      return match[1];
-    }
+  const source = String(text ?? '');
+  const keywordMatch = source.match(/\b(?:code|otp|verification|verify|security|passcode)[^0-9]{0,20}(\d{4,8})\b/i);
+  if (keywordMatch) {
+    return keywordMatch[1];
+  }
+
+  if (!looksLikeVerificationText(source)) {
+    return '';
+  }
+
+  const strictFallback = source.match(/\b(\d{6})\b/);
+  if (strictFallback) {
+    return strictFallback[1];
   }
   return '';
 }
@@ -233,7 +239,7 @@ function scoreMessage(message, options) {
     if (body.includes(term)) score += 2;
   }
 
-  if (/(verify|verification|confirm|security|otp|code|sign in|signin|activate|login)/i.test(`${subject}\n${body}`)) {
+  if (looksLikeVerificationText(`${subject}\n${body}`)) {
     score += 4;
   }
 
@@ -242,6 +248,19 @@ function scoreMessage(message, options) {
   if (verification.kind === 'otp') score += 2;
 
   return score;
+}
+
+function shouldPreferCandidate(candidate, bestCandidate) {
+  if (!bestCandidate) {
+    return true;
+  }
+  if (candidate.score > bestCandidate.score) {
+    return true;
+  }
+  if (candidate.score < bestCandidate.score) {
+    return false;
+  }
+  return candidate.received_at > bestCandidate.received_at;
 }
 
 function normalizePollOptions(options = {}) {
@@ -442,7 +461,7 @@ export async function pollVerification(root = ROOT, rawOptions = {}) {
         score: scoreMessage(fullMessage, options),
       };
 
-      if (!bestCandidate || candidate.score > bestCandidate.score || candidate.received_at > bestCandidate.received_at) {
+      if (shouldPreferCandidate(candidate, bestCandidate)) {
         bestCandidate = candidate;
       }
     }
@@ -480,3 +499,13 @@ export async function pollVerification(root = ROOT, rawOptions = {}) {
     inbox_email: inbox.email,
   };
 }
+
+export const __test__ = {
+  extractLinks,
+  extractVerification,
+  findOtp,
+  looksLikeVerificationLink,
+  looksLikeVerificationText,
+  scoreMessage,
+  shouldPreferCandidate,
+};

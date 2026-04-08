@@ -83,6 +83,7 @@ for (const script of [
   ['merge-tracker.mjs'],
   ['migrate-applications-csv.mjs', '--dry-run'],
   ['autosubmit-state.mjs', 'init'],
+  ['test-agentmail.mjs'],
   ['agentmail-state.mjs', 'status'],
   ['update-system.mjs', 'check'],
 ]) {
