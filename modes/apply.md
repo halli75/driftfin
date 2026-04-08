@@ -36,7 +36,11 @@ There are two valid operating modes:
    - call `rotate`
    - retry once with the new credential
 9. If a safe missing identity field appears, ask once, then save it in `config/profile.yml`.
-10. If AgentMail is configured and email verification appears, use it before blocking.
+10. If AgentMail is configured and email verification appears:
+   - run `node agentmail-state.mjs ensure-shared-inbox`
+   - trigger the email
+   - run `node agentmail-state.mjs poll-verification --since "<iso>" ...`
+   - use the returned OTP or link before blocking
 11. Fill every required field from the profile, CV, report, and generated answers.
 12. Upload the tailored PDF if required.
 13. Submit the application.

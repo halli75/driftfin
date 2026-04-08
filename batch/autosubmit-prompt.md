@@ -7,6 +7,7 @@ Work from the repo root. Read these files first:
 - `config/profile.yml`
 - `modes/_profile.md`
 - `cv.md`
+- `agentmail-state.mjs`
 - `reports/{{REPORT_PATH}}`
 
 Job context:
@@ -16,12 +17,16 @@ Job context:
 - Tracker #: `{{TRACKER_NUM}}`
 - Report #: `{{REPORT_NUM}}`
 - Base email for aliases: `{{BASE_EMAIL}}`
+- Login email to prefer: `{{LOGIN_EMAIL}}`
+- AgentMail enabled: `{{AGENTMAIL_ENABLED}}`
+- Verification timeout: `{{VERIFICATION_TIMEOUT_SECONDS}}s`
+- Poll interval: `{{POLL_INTERVAL_SECONDS}}s`
 
 Objective:
 - Verify the role is still live.
 - Submit the application without asking for human confirmation.
 - Reuse or create credentials through `autosubmit-state.mjs`.
-- If AgentMail is configured in `config/profile.yml`, prefer it for new ATS accounts and email verification.
+- If AgentMail is enabled, use the shared inbox from `agentmail-state.mjs` for new ATS accounts and email verification.
 - Stop only for hard manual gates such as CAPTCHA or MFA. For email verification, first try the configured email provider flow.
 
 Rules:
@@ -41,21 +46,24 @@ Suggested flow:
    - Workday: company tenant slug
 3. Initialize state:
    - `node autosubmit-state.mjs init`
-4. Fetch a credential:
-   - `node autosubmit-state.mjs get-or-create --platform "<platform>" --company "{{COMPANY}}" --tenant-key "<tenant-key>" --login-url "{{URL}}" --base-email "{{BASE_EMAIL}}"`
-   - If using AgentMail, create or select the inbox first and pass it as `--login-email "<agentmail-address>"`.
-5. Try to sign in or create the account with the returned credential.
-6. If that credential fails:
+4. If `{{AGENTMAIL_ENABLED}}` is `true`, confirm the shared inbox:
+   - `node agentmail-state.mjs ensure-shared-inbox`
+5. Fetch a credential:
+   - `node autosubmit-state.mjs get-or-create --platform "<platform>" --company "{{COMPANY}}" --tenant-key "<tenant-key>" --login-url "{{URL}}" --base-email "{{BASE_EMAIL}}" --login-email "{{LOGIN_EMAIL}}"`
+6. Try to sign in or create the account with the returned credential.
+7. If that credential fails:
    - `node autosubmit-state.mjs record-failure --credential-id "<old-id>" --reason "login_failed"`
-   - `node autosubmit-state.mjs rotate --credential-id "<old-id>" --platform "<platform>" --company "{{COMPANY}}" --tenant-key "<tenant-key>" --login-url "{{URL}}" --base-email "{{BASE_EMAIL}}" --reason "login_failed"`
+   - `node autosubmit-state.mjs rotate --credential-id "<old-id>" --platform "<platform>" --company "{{COMPANY}}" --tenant-key "<tenant-key>" --login-url "{{URL}}" --base-email "{{BASE_EMAIL}}" --reason "login_failed" --login-email "{{LOGIN_EMAIL}}"`
    - retry once with the rotated credential
-7. Fill the application using profile, CV, report, and tailored materials.
-8. If the site sends an email verification code or link and AgentMail is configured:
-   - use the configured AgentMail inbox to fetch the message
+8. Fill the application using profile, CV, report, and tailored materials.
+9. If the site sends an email verification code or link and `{{AGENTMAIL_ENABLED}}` is `true`:
+   - capture the current time immediately before triggering the email
+   - use the shared inbox to fetch the message:
+   - `node agentmail-state.mjs poll-verification --since "<iso-timestamp-before-trigger>" --timeout-seconds "{{VERIFICATION_TIMEOUT_SECONDS}}" --interval-seconds "{{POLL_INTERVAL_SECONDS}}" --platform "<platform>" --company "{{COMPANY}}" --sender-hint "<sender or domain if visible>" --subject-hint "verification"`
    - extract the OTP or confirmation link
    - continue the flow automatically
-8. Submit the application.
-9. If the credential worked, call:
+10. Submit the application.
+11. If the credential worked, call:
    - `node autosubmit-state.mjs record-success --credential-id "<credential-id>"`
 
 Return one JSON object with this exact shape:

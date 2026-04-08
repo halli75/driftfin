@@ -6,6 +6,7 @@ data/pipeline.md
 data/scan-history.tsv
 data/credentials.csv
 data/apply-log.csv
+data/agentmail-state.json
 reports/*.md
 !reports/.gitkeep
 output/*
@@ -31,6 +32,8 @@ modes/_profile.md
 .resolved-prompt-*
 .batch-worker-*
 node_modules/
+.env
+.env.local
 
 # OS
 .DS_Store

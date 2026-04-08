@@ -28,12 +28,14 @@ If you plan to use autosubmit, the first run will also create:
 
 - `data/credentials.csv`
 - `data/apply-log.csv`
+- `data/agentmail-state.json` when AgentMail is enabled
 
 ## Verify
 
 ```bash
 npm run codex:check
 npm run doctor
+npm run agentmail:status
 ```
 
 ## Start
@@ -58,4 +60,18 @@ Preview the evaluated roles that are eligible for autosubmit:
 
 ```bash
 npm run autosubmit -- --dry-run
+```
+
+## AgentMail
+
+If you want email verification handled automatically, set:
+
+```powershell
+$env:AGENTMAIL_API_KEY="your_key_here"
+```
+
+Then enable AgentMail in `config/profile.yml` and verify it:
+
+```bash
+npm run agentmail:status
 ```
