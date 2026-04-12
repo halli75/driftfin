@@ -83,7 +83,9 @@ for (const script of [
   ['merge-tracker.mjs'],
   ['migrate-applications-csv.mjs', '--dry-run'],
   ['autosubmit-state.mjs', 'init'],
+  ['manual-gates-state.mjs', 'init'],
   ['test-agentmail.mjs'],
+  ['test-merge-tracker.mjs'],
   ['agentmail-state.mjs', 'status'],
   ['update-system.mjs', 'check'],
 ]) {
@@ -127,6 +129,8 @@ for (const file of [
   'autosubmit-state.mjs',
   'agentmail-state.mjs',
   'agentmail-client.mjs',
+  'manual-gates-state.mjs',
+  'browser-handoff.mjs',
   'profile-config.mjs',
   'csv-store.mjs',
   'applications-store.mjs',

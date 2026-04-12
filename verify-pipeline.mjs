@@ -52,12 +52,23 @@ function main() {
   for (const row of rows) {
     const status = canonicalStatus(row.status);
     if (![
-      'discovered', 'evaluated', 'applying', 'applied', 'blocked',
+      'discovered', 'evaluated', 'applying', 'paused', 'applied', 'blocked',
       'failed', 'duplicate', 'closed', 'skipped', 'responded',
       'interview', 'offer', 'rejected',
     ].includes(status)) {
       error(`#${row.application_id}: unknown status "${row.status}"`);
       badStatuses += 1;
+    }
+
+    if (![
+      'discovered', 'evaluated', 'applying', 'paused', 'applied', 'blocked',
+      'failed', 'duplicate', 'closed', 'skipped', 'responded',
+      'interview', 'offer', 'rejected',
+    ].includes(String(row.status || '').trim().toLowerCase())) {
+      if (parseScoreValue(row.status) > 0) {
+        error(`#${row.application_id}: status column contains a score-like value "${row.status}"`);
+        badStatuses += 1;
+      }
     }
 
     if (row.score) {

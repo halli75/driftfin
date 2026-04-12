@@ -2,6 +2,7 @@ package data
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -27,11 +28,13 @@ var (
 func ParseApplications(repoPath string) []model.CareerApplication {
 	if apps := parseApplicationsCSV(repoPath); len(apps) > 0 {
 		enrichFromApplyLog(repoPath, apps)
+		enrichFromManualGates(repoPath, apps)
 		return apps
 	}
 
 	apps := parseLegacyApplicationsMarkdown(repoPath)
 	enrichFromApplyLog(repoPath, apps)
+	enrichFromManualGates(repoPath, apps)
 	return apps
 }
 
@@ -253,6 +256,46 @@ func enrichFromApplyLog(repoPath string, apps []model.CareerApplication) {
 	}
 }
 
+func enrichFromManualGates(repoPath string, apps []model.CareerApplication) {
+	filePath := filepath.Join(repoPath, "data", "manual-gates.json")
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return
+	}
+
+	type entry struct {
+		ApplicationID string `json:"application_id"`
+		GateURL       string `json:"gate_url"`
+		CurrentURL    string `json:"current_url"`
+		ResumeURL     string `json:"resume_url"`
+		State         string `json:"state"`
+	}
+
+	type stateFile struct {
+		Entries map[string]entry `json:"entries"`
+	}
+
+	var state stateFile
+	if err := json.Unmarshal(content, &state); err != nil {
+		return
+	}
+
+	for index := range apps {
+		entry, ok := state.Entries[apps[index].ApplicationID]
+		if !ok {
+			continue
+		}
+		apps[index].ManualGateState = entry.State
+		if entry.ResumeURL != "" {
+			apps[index].ManualGateURL = entry.ResumeURL
+		} else if entry.CurrentURL != "" {
+			apps[index].ManualGateURL = entry.CurrentURL
+		} else {
+			apps[index].ManualGateURL = entry.GateURL
+		}
+	}
+}
+
 // ComputeMetrics calculates aggregate metrics from applications.
 func ComputeMetrics(apps []model.CareerApplication) model.PipelineMetrics {
 	m := model.PipelineMetrics{
@@ -318,6 +361,8 @@ func NormalizeStatus(raw string) string {
 		return "duplicate"
 	case strings.Contains(s, "blocked"):
 		return "blocked"
+	case strings.Contains(s, "paused"):
+		return "paused"
 	case strings.Contains(s, "failed"):
 		return "failed"
 	case strings.Contains(s, "applying"):
@@ -436,15 +481,17 @@ func StatusPriority(status string) int {
 		return 4
 	case "applying":
 		return 5
-	case "skip":
+	case "paused":
 		return 6
-	case "closed":
+	case "skip":
 		return 7
-	case "duplicate":
+	case "closed":
 		return 8
-	case "rejected":
+	case "duplicate":
 		return 9
-	default:
+	case "rejected":
 		return 10
+	default:
+		return 11
 	}
 }

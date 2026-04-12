@@ -85,4 +85,5 @@ Each worker receives a resolved prompt from `batch/batch-prompt.md`. It must pro
 
 - Use canonical English status labels: `evaluated`, `applied`, `responded`, `interview`, `offer`, `rejected`, `closed`, `skipped`
 - Do not edit `data/applications.csv` directly for new rows
+- Tracker TSV column 7 must contain the real PDF path for the tailored resume
 - If a posting cannot be verified with a real browser, mark it as unconfirmed instead of assuming it is still open

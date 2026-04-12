@@ -23,6 +23,7 @@ const STATUS_RANK = {
   skipped: 0,
   evaluated: 1,
   applying: 2,
+  paused: 2,
   blocked: 2,
   failed: 2,
   applied: 3,

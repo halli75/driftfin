@@ -32,12 +32,13 @@ const SYSTEM_PATHS = [
   'modes/project.md',
   'modes/tracker.md',
   'modes/training.md',
-  'generate-pdf.mjs',
   'csv-store.mjs',
   'applications-store.mjs',
   'migrate-applications-csv.mjs',
   'merge-tracker.mjs',
   'autosubmit-state.mjs',
+  'manual-gates-state.mjs',
+  'browser-handoff.mjs',
   'agentmail-state.mjs',
   'agentmail-client.mjs',
   'profile-config.mjs',
@@ -68,6 +69,7 @@ const SYSTEM_PATHS = [
 
 const USER_PATHS = [
   'cv.md',
+  'generate-pdf.mjs',
   'config/profile.yml',
   'modes/_profile.md',
   'portals.yml',

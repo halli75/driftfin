@@ -12,6 +12,7 @@ Work from the repo root. Read these files first:
 
 Job context:
 - URL: `{{URL}}`
+- Original job URL: `{{ORIGINAL_URL}}`
 - Company: `{{COMPANY}}`
 - Role: `{{ROLE}}`
 - Tracker #: `{{TRACKER_NUM}}`
@@ -21,13 +22,15 @@ Job context:
 - AgentMail enabled: `{{AGENTMAIL_ENABLED}}`
 - Verification timeout: `{{VERIFICATION_TIMEOUT_SECONDS}}s`
 - Poll interval: `{{POLL_INTERVAL_SECONDS}}s`
+- Resume mode: `{{RESUME_MODE}}`
 
 Objective:
 - Verify the role is still live.
 - Submit the application without asking for human confirmation.
 - Reuse or create credentials through `autosubmit-state.mjs`.
 - If AgentMail is enabled, use the shared inbox from `agentmail-state.mjs` for new ATS accounts and email verification.
-- Stop only for hard manual gates such as CAPTCHA or MFA. For email verification, first try the configured email provider flow.
+- For Cloudflare, CAPTCHA, MFA, or similar manual gates, return a `paused` result with the current URL so Driftfin can hand the browser to the user and later resume.
+- For email verification, first try the configured email provider flow.
 
 Rules:
 - Do not fabricate experience, dates, or answers.
@@ -38,7 +41,8 @@ Rules:
 - Final output must be JSON only. No markdown.
 
 Suggested flow:
-1. Open the job page and confirm the listing is active.
+1. Open `{{URL}}` and confirm the listing or apply flow is active.
+   - If `{{RESUME_MODE}}` is `true`, treat `{{URL}}` as the resumed handoff URL and continue from there instead of restarting from the original listing.
 2. Detect the ATS platform and a stable tenant key.
    - Greenhouse: board/company slug
    - Lever: company slug
@@ -69,21 +73,24 @@ Suggested flow:
 Return one JSON object with this exact shape:
 ```json
 {
-  "result": "submitted|blocked|failed|duplicate_skipped|closed_skipped",
+  "result": "submitted|paused|blocked|failed|duplicate_skipped|closed_skipped",
   "platform": "workday",
   "tenant_key": "acme-workday",
   "credential_id": "cred_123",
   "credential_action": "reused|created|rotated|none",
   "login_identity": "agent@inbox.agentmail.to",
-  "blocker_type": "captcha|otp|mfa|email_verification|browser_unavailable|login_failed|duplicate|closed|unknown",
+  "blocker_type": "cloudflare|captcha|otp|mfa|email_verification|browser_unavailable|login_failed|duplicate|closed|unknown",
+  "resume_url": "https://example.com/current-page",
   "notes": "short plain text summary",
-  "tracker_status": "Applied|Discarded|",
+  "tracker_status": "Applied|Paused|Discarded|",
   "tracker_note": "short tracker note"
 }
 ```
 
 Result semantics:
 - `submitted`: application was sent successfully
+- `paused`: manual gate requires user takeover before Driftfin can continue
+- For `paused`, set `resume_url` to the exact current page URL that the user should continue from
 - `blocked`: manual gate prevented submission
 - `failed`: unexpected error or browser limitation prevented completion
 - `duplicate_skipped`: portal indicated an existing submission

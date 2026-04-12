@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -67,6 +68,18 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.pipeline.CopyReportCache(&old)
 		return m, nil
 
+	case screens.PipelineReloadMsg:
+		apps := data.ParseApplications(m.repoPath)
+		metrics := data.ComputeMetrics(apps)
+		old := m.pipeline
+		m.pipeline = screens.NewPipelineModel(
+			theme.NewTheme("catppuccin-mocha"),
+			apps, metrics, m.repoPath,
+			old.Width(), old.Height(),
+		)
+		m.pipeline.CopyReportCache(&old)
+		return m, nil
+
 	case screens.PipelineOpenReportMsg:
 		m.viewer = screens.NewViewerModel(
 			theme.NewTheme("catppuccin-mocha"),
@@ -90,10 +103,41 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "linux":
 				cmd = exec.Command("xdg-open", url)
 			default:
-				cmd = exec.Command("open", url)
+				cmd = exec.Command("cmd", "/c", "start", "", url)
 			}
 			_ = cmd.Start()
 			return nil
+		}
+
+	case screens.PipelineOpenManualGateMsg:
+		app := msg.App
+		return m, func() tea.Msg {
+			url := app.ManualGateURL
+			if url == "" {
+				url = app.JobURL
+			}
+			if url == "" {
+				return nil
+			}
+			cmd := exec.Command("node",
+				filepath.Join(msg.RepoPath, "browser-handoff.mjs"),
+				"open",
+				"--session-id", fmt.Sprintf("manual-gate-%s", app.ApplicationID),
+				"--url", url,
+			)
+			_ = cmd.Start()
+			return nil
+		}
+
+	case screens.PipelineResumeAutosubmitMsg:
+		app := msg.App
+		return m, func() tea.Msg {
+			cmd := exec.Command("node",
+				filepath.Join(msg.RepoPath, "batch", "autosubmit-runner.mjs"),
+				"--resume", app.ApplicationID,
+			)
+			_ = cmd.Run()
+			return screens.PipelineReloadMsg{}
 		}
 
 	default:

@@ -25,6 +25,7 @@ const STATUS_RANK = {
   skipped: 0,
   evaluated: 1,
   applying: 2,
+  paused: 2,
   failed: 2,
   blocked: 2,
   applied: 3,
@@ -43,6 +44,23 @@ function readReportUrl(reportPath) {
   const header = readFileSync(fullPath, 'utf8').slice(0, 1000);
   const match = header.match(/^\*\*URL:\*\*\s*(https?:\/\/\S+)/m);
   return match ? match[1] : '';
+}
+
+function readReportPdf(reportPath) {
+  if (!reportPath) return '';
+  const fullPath = join(ROOT, reportPath);
+  if (!existsSync(fullPath)) return '';
+  const header = readFileSync(fullPath, 'utf8').slice(0, 1000);
+  const match = header.match(/^\*\*PDF:\*\*\s*(\S+)/m);
+  return match ? match[1] : '';
+}
+
+function normalizePdfPath(raw, reportPath = '') {
+  const text = String(raw ?? '').trim();
+  if (/\.pdf$/i.test(text)) {
+    return text;
+  }
+  return readReportPdf(reportPath);
 }
 
 function parseAddition(content) {
@@ -67,15 +85,15 @@ function parseAddition(content) {
 
   const parts = trimmed.split('\t');
   if (parts.length < 8) return null;
-  const statusFirst = /\b(evalu|applied|applying|respond|interview|offer|reject|discard|skip|closed|blocked|failed|duplicate|discovered)\b/i.test(parts[4]);
+  const report = extractReportParts(parts[7]);
   return {
     application_id: parts[0],
     discovered_at: parts[1],
     company: parts[2],
     position: parts[3],
-    status: statusFirst ? parts[4] : parts[5],
-    score: statusFirst ? parts[5] : parts[4],
-    custom_resume_path: parts[6],
+    status: parts[4],
+    score: parts[5],
+    custom_resume_path: normalizePdfPath(parts[6], report.report_path),
     report_raw: parts[7],
     details: parts[8] || '',
   };
@@ -193,7 +211,16 @@ async function main() {
   console.log(`Moved ${files.length} TSV files to merged/`);
 }
 
-main().catch((error) => {
-  console.error(error.message);
-  process.exit(1);
-});
+export const __test__ = {
+  normalizePdfPath,
+  parseAddition,
+};
+
+const IS_MAIN = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+
+if (IS_MAIN) {
+  main().catch((error) => {
+    console.error(error.message);
+    process.exit(1);
+  });
+}

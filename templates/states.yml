@@ -22,6 +22,11 @@ states:
     description: Submission in progress
     dashboard_group: applying
 
+  - id: paused
+    label: Paused
+    description: Waiting for the user to complete a manual gate before Driftfin resumes
+    dashboard_group: paused
+
   - id: applied
     label: Applied
     aliases: [sent]

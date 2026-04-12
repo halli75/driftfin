@@ -11,6 +11,7 @@ import {
 import os from 'os';
 import { basename, dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { createInterface } from 'node:readline/promises';
 import { readApplications, parseScoreValue } from '../applications-store.mjs';
 import { getAgentMailSettings, getAutosubmitSettings, getCandidateEmail } from '../profile-config.mjs';
 
@@ -23,6 +24,8 @@ const LOGS_DIR = join(__dirname, 'logs');
 const APPLY_LOG_FILE = join(PROJECT_DIR, 'data', 'apply-log.csv');
 const AUTOSUBMIT_STATE = join(PROJECT_DIR, 'autosubmit-state.mjs');
 const AGENTMAIL_STATE = join(PROJECT_DIR, 'agentmail-state.mjs');
+const MANUAL_GATES_STATE = join(PROJECT_DIR, 'manual-gates-state.mjs');
+const BROWSER_HANDOFF = join(PROJECT_DIR, 'browser-handoff.mjs');
 const STATE_HEADER = 'report_num\ttracker_num\tcompany\trole\tstatus\tstarted_at\tcompleted_at\tcredential_id\tcredential_action\tresult\terror\tretries';
 const isWindows = process.platform === 'win32';
 
@@ -38,6 +41,8 @@ Options:
   --dry-run
   --retry-failed
   --retry-blocked
+  --resume ID
+  --resume-all-paused
   --start-from N
   --limit N
   --max-retries N
@@ -50,6 +55,8 @@ function parseArgs(argv) {
     dryRun: false,
     retryFailed: false,
     retryBlocked: false,
+    resume: '',
+    resumeAllPaused: false,
     startFrom: 0,
     limit: 0,
     maxRetries: 2,
@@ -69,6 +76,12 @@ function parseArgs(argv) {
         break;
       case '--retry-blocked':
         options.retryBlocked = true;
+        break;
+      case '--resume':
+        options.resume = String(argv[++index] || '').trim();
+        break;
+      case '--resume-all-paused':
+        options.resumeAllPaused = true;
         break;
       case '--start-from':
         options.startFrom = Number.parseInt(argv[++index], 10) || 0;
@@ -151,6 +164,7 @@ function readProfileSettings() {
   return {
     baseEmail: getCandidateEmail(PROJECT_DIR),
     minimumScore: getAutosubmitSettings(PROJECT_DIR).minimumScore,
+    blockerPolicy: getAutosubmitSettings(PROJECT_DIR).blockerPolicy,
     agentmail: getAgentMailSettings(PROJECT_DIR),
   };
 }
@@ -165,6 +179,12 @@ function ensurePrerequisites() {
   if (!existsSync(AGENTMAIL_STATE)) {
     throw new Error(`Missing ${AGENTMAIL_STATE}`);
   }
+  if (!existsSync(MANUAL_GATES_STATE)) {
+    throw new Error(`Missing ${MANUAL_GATES_STATE}`);
+  }
+  if (!existsSync(BROWSER_HANDOFF)) {
+    throw new Error(`Missing ${BROWSER_HANDOFF}`);
+  }
 
   const version = codexVersionOk();
   if (version.status !== 0) {
@@ -178,6 +198,7 @@ function ensurePrerequisites() {
 
   mkdirSync(LOGS_DIR, { recursive: true });
   runStateCommand(['init']);
+  runJsonScript(MANUAL_GATES_STATE, ['init']);
 }
 
 function acquireRunnerLock() {
@@ -411,6 +432,16 @@ function selectEligibleApps(options, settings) {
   return apps;
 }
 
+function selectPausedApps(options) {
+  const rows = parseTrackerRows()
+    .filter((app) => app.status === 'paused');
+
+  if (options.resume) {
+    return rows.filter((app) => app.applicationId === options.resume || app.reportNum === options.resume);
+  }
+  return rows;
+}
+
 function replaceAll(template, replacements) {
   let result = template;
   for (const [key, value] of Object.entries(replacements)) {
@@ -485,11 +516,44 @@ function sanitizeNote(value) {
   return String(value ?? '').replace(/\s+/g, ' ').trim();
 }
 
+function manualGateSessionId(app) {
+  return `manual-gate-${app.applicationId || app.reportNum}`;
+}
+
+function isManualGate(payload) {
+  const type = String(payload?.blocker_type || '').toLowerCase();
+  return ['captcha', 'cloudflare', 'cloudflare_security_verification', 'mfa'].includes(type);
+}
+
+function normalizeWorkerPayload(payload, app) {
+  if (!payload || typeof payload !== 'object') {
+    return payload;
+  }
+
+  const normalized = {
+    ...payload,
+    notes: sanitizeNote(payload.notes || ''),
+    tracker_note: sanitizeNote(payload.tracker_note || ''),
+    resume_url: payload.resume_url || payload.current_url || app.jobUrl || '',
+  };
+
+  if (normalized.result === 'blocked' && isManualGate(normalized)) {
+    normalized.result = 'paused';
+    if (!normalized.tracker_status) {
+      normalized.tracker_status = 'Paused';
+    }
+  }
+
+  return normalized;
+}
+
 function defaultTrackerStatus(result) {
   switch (result) {
     case 'submitted':
     case 'duplicate_skipped':
       return 'Applied';
+    case 'paused':
+      return 'Paused';
     case 'closed_skipped':
       return 'Discarded';
     default:
@@ -506,6 +570,8 @@ function fallbackTrackerNote(app, payload) {
       return `Portal reported an existing application ${stamp} via ${payload.platform}`;
     case 'closed_skipped':
       return `Job closed before autosubmit ${stamp}`;
+    case 'paused':
+      return `Autosubmit paused ${stamp}: ${payload.blocker_type || payload.notes || 'manual gate takeover required'}`;
     case 'blocked':
       return `Autosubmit blocked ${stamp}: ${payload.blocker_type || payload.notes || 'manual gate required'}`;
     default:
@@ -557,6 +623,67 @@ function recordApplyOutcome(app, payload, durationSeconds) {
   runStateCommand(trackerArgs);
 }
 
+function getManualGateEntry(applicationId) {
+  const payload = runJsonScript(MANUAL_GATES_STATE, ['get', '--application-id', applicationId]);
+  return payload.entry || null;
+}
+
+function setManualGateEntry(app, payload, browser = {}) {
+  const args = [
+    'set',
+    '--application-id', app.applicationId,
+    '--report-num', app.reportNum,
+    '--company', app.company,
+    '--role', app.role,
+    '--job-url', app.jobUrl,
+    '--gate-type', payload.blocker_type || 'manual_gate',
+    '--gate-url', payload.resume_url || app.jobUrl,
+    '--session-id', manualGateSessionId(app),
+    '--browser-profile-dir', browser.browser_profile_dir || '',
+    '--current-url', browser.current_url || payload.resume_url || app.jobUrl,
+    '--resume-url', browser.current_url || payload.resume_url || app.jobUrl,
+    '--state', browser.state || 'waiting',
+    '--notes', sanitizeNote(payload.notes || ''),
+  ];
+  runJsonScript(MANUAL_GATES_STATE, args);
+}
+
+function clearManualGateEntry(applicationId) {
+  runJsonScript(MANUAL_GATES_STATE, ['clear', '--application-id', applicationId]);
+}
+
+function openManualGateBrowser(app, payload) {
+  return runJsonScript(BROWSER_HANDOFF, [
+    'open',
+    '--session-id', manualGateSessionId(app),
+    '--url', payload.resume_url || app.jobUrl,
+  ]);
+}
+
+function getManualGateBrowser(app) {
+  return runJsonScript(BROWSER_HANDOFF, [
+    'status',
+    '--session-id', manualGateSessionId(app),
+  ]);
+}
+
+async function waitForResumeConfirmation(app) {
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    return false;
+  }
+
+  const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  try {
+    await rl.question(`Manual gate paused for ${app.company} - ${app.role}. Complete the challenge in the opened browser, then press Enter to resume.`);
+    return true;
+  } finally {
+    rl.close();
+  }
+}
+
 function prepareAgentMail(settings) {
   if (!settings.agentmail.enabled) {
     return {
@@ -582,7 +709,7 @@ function prepareAgentMail(settings) {
   };
 }
 
-async function runWorker(app, runtime) {
+async function runWorker(app, runtime, options = {}) {
   const startedAt = nowIso();
   const startedMs = Date.now();
   const retries = getRetries(app.reportNum);
@@ -606,7 +733,7 @@ async function runWorker(app, runtime) {
 
   const template = readFileSync(PROMPT_FILE, 'utf8');
   const prompt = replaceAll(template, {
-    URL: app.jobUrl,
+    URL: runtime.resumeUrl || app.jobUrl,
     COMPANY: app.company,
     ROLE: app.role,
     REPORT_NUM: app.reportNum,
@@ -617,6 +744,8 @@ async function runWorker(app, runtime) {
     AGENTMAIL_ENABLED: runtime.agentmailEnabled ? 'true' : 'false',
     VERIFICATION_TIMEOUT_SECONDS: String(runtime.verificationTimeoutSeconds),
     POLL_INTERVAL_SECONDS: String(runtime.pollIntervalSeconds),
+    RESUME_MODE: runtime.resumeMode ? 'true' : 'false',
+    ORIGINAL_URL: app.jobUrl,
     DATE: nowIso().slice(0, 10),
   });
 
@@ -666,10 +795,20 @@ async function runWorker(app, runtime) {
   const completedAt = nowIso();
   const durationSeconds = Math.max(0, Math.round((Date.now() - startedMs) / 1000));
   const nextRetries = result.exitCode === 0 ? retries : retries + 1;
+  payload = normalizeWorkerPayload(payload, app);
 
   if (result.exitCode === 0 && payload && payload.result) {
     try {
       recordApplyOutcome(app, payload, durationSeconds);
+      if (payload.result === 'paused') {
+        const browser = openManualGateBrowser(app, payload);
+        setManualGateEntry(app, payload, {
+          ...browser,
+          state: 'waiting',
+        });
+      } else {
+        clearManualGateEntry(app.applicationId);
+      }
       await updateState({
         report_num: app.reportNum,
         tracker_num: app.trackerNum,
@@ -684,6 +823,28 @@ async function runWorker(app, runtime) {
         error: '-',
         retries: String(retries),
       });
+
+      if (payload.result === 'paused' && runtime.blockerPolicy === 'pause' && options.interactiveResume !== false) {
+        const confirmed = await waitForResumeConfirmation(app);
+        if (confirmed) {
+          const browser = getManualGateBrowser(app);
+          runJsonScript(MANUAL_GATES_STATE, [
+            'set',
+            '--application-id', app.applicationId,
+            '--state', 'resumed',
+            '--current-url', browser.current_url || payload.resume_url || app.jobUrl,
+            '--resume-url', browser.current_url || payload.resume_url || app.jobUrl,
+            '--resumed-at', nowIso(),
+          ]);
+          await runWorker(app, {
+            ...runtime,
+            resumeMode: true,
+            resumeUrl: browser.current_url || payload.resume_url || app.jobUrl,
+          }, {
+            interactiveResume: false,
+          });
+        }
+      }
     } catch (error) {
       const message = sanitizeNote(error.message || 'Failed to persist autosubmit outcome');
       await updateState({
@@ -756,17 +917,19 @@ function printSummary() {
   const counts = {
     total: rows.length,
     completed: 0,
+    paused: 0,
     blocked: 0,
     failed: 0,
   };
 
   for (const row of rows) {
     if (row.result === 'submitted' || row.status === 'completed') counts.completed += 1;
+    else if (row.result === 'paused' || row.status === 'paused') counts.paused += 1;
     else if (row.result === 'blocked' || row.status === 'blocked') counts.blocked += 1;
     else if (row.result === 'failed' || row.status === 'failed') counts.failed += 1;
   }
 
-  console.log(`Total: ${counts.total} | Submitted: ${counts.completed} | Blocked: ${counts.blocked} | Failed: ${counts.failed}`);
+  console.log(`Total: ${counts.total} | Submitted: ${counts.completed} | Paused: ${counts.paused} | Blocked: ${counts.blocked} | Failed: ${counts.failed}`);
 }
 
 async function main() {
@@ -779,8 +942,14 @@ async function main() {
     throw new Error('Could not read candidate email from config/profile.yml');
   }
 
-  const apps = selectEligibleApps(options, settings);
-  console.log(`Eligible evaluated offers (score >= ${settings.minimumScore.toFixed(1)}): ${apps.length}`);
+  const apps = options.resume || options.resumeAllPaused
+    ? selectPausedApps(options)
+    : selectEligibleApps(options, settings);
+  if (options.resume || options.resumeAllPaused) {
+    console.log(`Paused offers selected for resume: ${apps.length}`);
+  } else {
+    console.log(`Eligible evaluated offers (score >= ${settings.minimumScore.toFixed(1)}): ${apps.length}`);
+  }
 
   if (options.dryRun) {
     for (const app of apps) {
@@ -798,8 +967,25 @@ async function main() {
       agentmailEnabled: agentmail.enabled,
       verificationTimeoutSeconds: agentmail.verificationTimeoutSeconds,
       pollIntervalSeconds: agentmail.pollIntervalSeconds,
+      blockerPolicy: settings.blockerPolicy,
+      resumeMode: false,
+      resumeUrl: '',
     };
-    await runPool(apps, options.parallel, (app) => runWorker(app, runtime));
+    await runPool(apps, options.parallel, async (app) => {
+      if (options.resume || options.resumeAllPaused) {
+        const browser = getManualGateBrowser(app);
+        const entry = getManualGateEntry(app.applicationId);
+        await runWorker(app, {
+          ...runtime,
+          resumeMode: true,
+          resumeUrl: browser.current_url || entry?.resume_url || entry?.gate_url || app.jobUrl,
+        }, {
+          interactiveResume: false,
+        });
+        return;
+      }
+      await runWorker(app, runtime);
+    });
     printSummary();
   } finally {
     releaseRunnerLock();

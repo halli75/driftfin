@@ -132,6 +132,7 @@ export function canonicalStatus(raw) {
   if (!status) return 'discovered';
   if (status.includes('closed') || status.includes('discard')) return 'closed';
   if (status.includes('duplicate')) return 'duplicate';
+  if (status.includes('paused')) return 'paused';
   if (status.includes('blocked')) return 'blocked';
   if (status.includes('failed')) return 'failed';
   if (status.includes('applied') || status === 'sent') return 'applied';
@@ -169,6 +170,8 @@ export function displayStatus(raw) {
       return 'Failed';
     case 'applying':
       return 'Applying';
+    case 'paused':
+      return 'Paused';
     case 'skipped':
       return 'Skipped';
     default:

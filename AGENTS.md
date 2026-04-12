@@ -6,6 +6,7 @@ There are two layers in this repo.
 
 **User Layer (never auto-updated):**
 - `cv.md`
+- `generate-pdf.mjs`
 - `config/profile.yml`
 - `modes/_profile.md`
 - `article-digest.md`
@@ -20,7 +21,7 @@ There are two layers in this repo.
 - `AGENTS.md`
 - `modes/_shared.md`
 - `modes/*.md`
-- `*.mjs`
+- `*.mjs` except `generate-pdf.mjs`
 - `batch/*`
 - `templates/*`
 - `fonts/*`
@@ -111,7 +112,7 @@ Common changes:
 - For normal evaluation flows, strongly discourage low-fit applications below `4.0/5`.
 - In autosubmit mode, only submit rows whose `score` is greater than or equal to `automation.autosubmit.minimum_score` in `config/profile.yml`.
 - Prefer AgentMail for new ATS accounts and email verification when it is configured. Use `node agentmail-state.mjs ensure-shared-inbox` and `node agentmail-state.mjs poll-verification ...` instead of manual inbox reasoning. Otherwise fall back to the candidate email.
-- Stop for CAPTCHA, MFA, or similar hard manual gates. Log the blocker and leave the tracker status unchanged.
+- Pause for Cloudflare, CAPTCHA, MFA, or similar manual gates. Hand the browser to the user, record the session in the manual-gate state, and resume afterward instead of treating it as a terminal blocker.
 
 ## Offer Verification
 
@@ -132,6 +133,7 @@ Rules:
 - `merge-tracker.mjs` performs the merge into `data/applications.csv`.
 - Use `migrate-applications-csv.mjs --dry-run` before any legacy markdown migration.
 - Every report must include `**URL:**` in the header.
+- Tracker TSV column 7 must contain the actual PDF path, not an emoji or placeholder.
 
 ## TSV Format
 
@@ -148,7 +150,7 @@ The required order is:
 4. `role`
 5. `status`
 6. `score`
-7. `pdf`
+7. `pdf_path`
 8. `report`
 9. `notes`
 
@@ -160,6 +162,7 @@ CSV lifecycle states:
 - `discovered`
 - `evaluated`
 - `applying`
+- `paused`
 - `applied`
 - `blocked`
 - `failed`
@@ -177,8 +180,11 @@ No markdown, no dates, and no extra commentary in the status field.
 
 - Read `cv.md`, `config/profile.yml`, `modes/_profile.md`, and `article-digest.md` when relevant.
 - Before any autosubmit run, initialize `data/applications.csv`, `data/credentials.csv`, and `data/apply-log.csv` with `node autosubmit-state.mjs init`.
+- Before any manual-gate resume flow, initialize `data/manual-gates.json` with `node manual-gates-state.mjs init`.
 - If AgentMail is enabled, verify it with `node agentmail-state.mjs status` and provision the shared inbox with `node agentmail-state.mjs ensure-shared-inbox`.
 - Use `data/credentials.csv` as the local credential ledger and `data/apply-log.csv` as the local submission log.
+- Use `browser-handoff.mjs` plus `manual-gates-state.mjs` for paused manual-gate takeover and resume.
+- `generate-pdf.mjs` and `interview-prep/story-bank.md` are explicitly sanctioned local mutation targets when Driftfin needs to improve PDF generation or append reusable STAR stories.
 - `data/applications.csv` must include `score` and `grade`; evaluation updates both.
 - Do not hardcode proof-point metrics. Read them from source files at evaluation time.
 - Generate candidate-facing output in the language of the JD unless the user says otherwise.

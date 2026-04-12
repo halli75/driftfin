@@ -104,13 +104,14 @@ batch/tracker-additions/{{ID}}.tsv
 Format:
 
 ```text
-{num}\t{{DATE}}\t{company}\t{role}\t{status}\t{score}/5\t{pdf_emoji}\t[{{REPORT_NUM}}](reports/{{REPORT_NUM}}-{company-slug}-{{DATE}}.md)\t{note}
+{num}\t{{DATE}}\t{company}\t{role}\t{status}\t{score}/5\toutput/cv-candidate-{company-slug}-{{DATE}}.pdf\t[{{REPORT_NUM}}](reports/{{REPORT_NUM}}-{company-slug}-{{DATE}}.md)\t{note}
 ```
 
 Rules:
 
 - Use canonical English statuses from `templates/states.yml`
 - For a completed evaluation, default to `Evaluated`
+- Column 7 must be the actual PDF path, not an emoji or placeholder
 - Do not edit `data/applications.csv` directly
 
 ## Failure Handling

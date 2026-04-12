@@ -28,7 +28,7 @@ When autosubmit is enabled:
 - submit only rows whose score is at or above `automation.autosubmit.minimum_score`
 - reuse or create credentials through `data/credentials.csv`
 - log every submission attempt in `data/apply-log.csv`
-- leave manual-gate cases blocked instead of forcing the submission
+- leave manual-gate cases paused and resumable instead of treating them as hard blockers
 
 ## Special cases
 

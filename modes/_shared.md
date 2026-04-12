@@ -83,7 +83,7 @@ After detecting archetype, read `modes/_profile.md` for the user's specific fram
 7. Be direct and actionable -- no fluff
 8. Native tech English for generated text. Short sentences, action verbs, no passive voice.
 8b. Case study URLs in PDF Professional Summary (recruiter may only read this).
-9. **Tracker additions as TSV** -- NEVER edit `data/applications.csv` directly from evaluation workers. Write TSV in `batch/tracker-additions/`; `merge-tracker.mjs` merges into the CSV tracker.
+9. **Tracker additions as TSV** -- NEVER edit `data/applications.csv` directly from evaluation workers. Write TSV in `batch/tracker-additions/`; `merge-tracker.mjs` merges into the CSV tracker. TSV column 7 must be the real PDF path, not an emoji.
 10. **Include `**URL:**` in every report header.**
 11. In autosubmit mode, use `node autosubmit-state.mjs` for credential reuse, credential rotation, apply logging, and tracker note updates.
 12. If AgentMail is enabled, use `node agentmail-state.mjs` for shared inbox setup and verification polling.
@@ -96,10 +96,10 @@ After detecting archetype, read `modes/_profile.md` for the user's specific fram
 | WebFetch | Fallback for extracting JDs from static pages |
 | Playwright | Verify offers (browser_navigate + browser_snapshot). **NEVER 2+ agents with Playwright in parallel.** |
 | Read | cv.md, _profile.md, article-digest.md, cv-template.html |
-| Write | Temporary HTML for PDF, applications.csv, reports .md |
+| Write | Temporary HTML for PDF, applications.csv, reports .md, `interview-prep/story-bank.md` |
 | Edit | Update the CSV tracker through helper scripts |
 | Canva MCP | Optional visual CV generation. Duplicate base design, edit text, export PDF. Requires `canva_resume_design_id` in profile.yml. |
-| Bash | `node generate-pdf.mjs` |
+| Bash | `node generate-pdf.mjs`, `node manual-gates-state.mjs`, `node browser-handoff.mjs` |
 
 ### Time-to-offer priority
 - Working demo + metrics > perfection

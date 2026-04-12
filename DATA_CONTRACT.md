@@ -9,6 +9,7 @@ These files contain your personal data, customizations, and work product. Update
 | File | Purpose |
 |------|---------|
 | `cv.md` | Your CV in markdown |
+| `generate-pdf.mjs` | Your local PDF generation pipeline and ATS fallback customizations |
 | `config/profile.yml` | Your identity, targets, comp range |
 | `modes/_profile.md` | Your archetypes, narrative, negotiation scripts |
 | `article-digest.md` | Your proof points from portfolio |
@@ -20,6 +21,8 @@ These files contain your personal data, customizations, and work product. Update
 | `data/credentials.csv` | Your local portal credentials ledger |
 | `data/apply-log.csv` | Your autosubmit attempt log |
 | `data/agentmail-state.json` | Your local shared AgentMail inbox state |
+| `data/manual-gates.json` | Your paused manual-gate takeover sessions |
+| `data/manual-browser/` | Persistent browser profiles used for manual gate handoff |
 | `reports/*` | Your evaluation reports |
 | `output/*` | Your generated PDFs |
 | `jds/*` | Your saved job descriptions |
@@ -45,12 +48,14 @@ These files contain system logic, scripts, templates, and instructions that impr
 | `modes/tracker.md` | Tracker instructions |
 | `modes/training.md` | Training evaluation instructions |
 | `AGENTS.md` | Agent instructions |
-| `*.mjs` | Utility scripts |
+| `*.mjs` except `generate-pdf.mjs` | Utility scripts |
 | `batch/batch-prompt.md` | Batch worker prompt |
 | `batch/batch-runner.mjs` | Batch orchestrator |
 | `batch/autosubmit-prompt.md` | Autosubmit worker prompt |
 | `batch/autosubmit-runner.mjs` | Autosubmit orchestrator |
 | `autosubmit-state.mjs` | Credential store and autosubmit logging utilities |
+| `manual-gates-state.mjs` | Resumable manual-gate state store |
+| `browser-handoff.mjs` | Local browser handoff server for manual takeover |
 | `agentmail-state.mjs` | AgentMail inbox lifecycle and verification polling CLI |
 | `agentmail-client.mjs` | AgentMail SDK wrapper and state manager |
 | `profile-config.mjs` | Shared profile and email automation config loader |

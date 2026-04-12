@@ -24,6 +24,6 @@ If autosubmit is enabled in `config/profile.yml` and the final state is not `SKI
 ## Failure handling
 
 - If JD extraction fails, ask for pasted text or a screenshot.
-- If the application flow hits CAPTCHA or MFA, stop the submit step, log it as blocked, and keep the evaluation output.
+- If the application flow hits Cloudflare, CAPTCHA, or MFA, pause the submit step, record a resumable manual-gate session, and continue only after the user completes the challenge.
 - If email verification appears and AgentMail is configured, use `node agentmail-state.mjs poll-verification ...` before giving up.
 - If the role is closed, write the report and tracker entry but do not attempt submission.

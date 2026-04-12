@@ -9,6 +9,7 @@
 - Batch evaluation runs through `codex exec`.
 - Autosubmit is implemented and uses local credential and attempt logs.
 - AgentMail is optional and recommended for agent-managed inboxes. Shared inbox provisioning, polling, and OTP/link extraction are implemented through a local CLI.
+- Cloudflare, CAPTCHA, and MFA now pause into a resumable user-takeover flow instead of becoming immediate hard blockers.
 
 Treat this repo as a strong prototype, not a fully polished one-click apply system.
 
@@ -201,6 +202,7 @@ Main statuses:
 - `discovered`
 - `evaluated`
 - `applying`
+- `paused`
 - `applied`
 - `blocked`
 - `failed`
@@ -213,6 +215,7 @@ Main statuses:
 - `data/credentials.csv`: local credential store for ATS logins; contains raw passwords and must stay local
 - `data/apply-log.csv`: append-only submission attempt log, including result and `duration_seconds`
 - `data/agentmail-state.json`: local shared inbox metadata and poll cursor state
+- `data/manual-gates.json`: paused manual-gate takeover sessions
 
 Passwords are intentionally kept out of `data/applications.csv`.
 

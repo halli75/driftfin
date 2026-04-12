@@ -48,12 +48,13 @@ There are two valid operating modes:
 
 ## Manual gates
 
-If the flow hits CAPTCHA or MFA:
+If the flow hits Cloudflare, CAPTCHA, or MFA:
 
-- stop the application
-- do not submit partial data
-- log it as blocked in `data/apply-log.csv`
-- leave the tracker status unchanged
+- pause the application instead of treating it as a terminal blocker
+- record the paused session in `data/manual-gates.json`
+- open the handoff browser session for the user
+- resume after the user completes the challenge
+- only convert it to `blocked` if the user abandons the session or the resume attempt expires
 
 ## Workday rule
 

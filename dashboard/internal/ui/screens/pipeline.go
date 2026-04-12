@@ -29,6 +29,18 @@ type PipelineOpenURLMsg struct {
 	URL string
 }
 
+type PipelineOpenManualGateMsg struct {
+	RepoPath string
+	App      model.CareerApplication
+}
+
+type PipelineResumeAutosubmitMsg struct {
+	RepoPath string
+	App      model.CareerApplication
+}
+
+type PipelineReloadMsg struct{}
+
 // PipelineLoadReportMsg requests lazy loading of a report summary.
 type PipelineLoadReportMsg struct {
 	RepoPath   string
@@ -83,10 +95,10 @@ var pipelineTabs = []pipelineTab{
 
 var sortCycle = []string{sortScore, sortDate, sortCompany, sortStatus}
 
-var statusOptions = []string{"evaluated", "applied", "responded", "interview", "offer", "rejected", "closed", "duplicate", "blocked", "failed", "skipped"}
+var statusOptions = []string{"evaluated", "applying", "paused", "applied", "responded", "interview", "offer", "rejected", "closed", "duplicate", "blocked", "failed", "skipped"}
 
 // statusGroupOrder defines display order for grouped view.
-var statusGroupOrder = []string{"interview", "offer", "responded", "applied", "evaluated", "applying", "blocked", "failed", "skip", "closed", "duplicate", "rejected"}
+var statusGroupOrder = []string{"interview", "offer", "responded", "applied", "evaluated", "applying", "paused", "blocked", "failed", "skip", "closed", "duplicate", "rejected"}
 
 // PipelineModel implements the career pipeline dashboard screen.
 type PipelineModel struct {
@@ -259,6 +271,20 @@ func (m PipelineModel) handleKey(msg tea.KeyMsg) (PipelineModel, tea.Cmd) {
 		if app, ok := m.CurrentApp(); ok && app.JobURL != "" {
 			return m, func() tea.Msg {
 				return PipelineOpenURLMsg{URL: app.JobURL}
+			}
+		}
+
+	case "b":
+		if app, ok := m.CurrentApp(); ok {
+			return m, func() tea.Msg {
+				return PipelineOpenManualGateMsg{RepoPath: m.repoPath, App: app}
+			}
+		}
+
+	case "r":
+		if app, ok := m.CurrentApp(); ok {
+			return m, func() tea.Msg {
+				return PipelineResumeAutosubmitMsg{RepoPath: m.repoPath, App: app}
 			}
 		}
 
@@ -813,6 +839,8 @@ func (m PipelineModel) renderHelp() string {
 		keyStyle.Render("s") + descStyle.Render(" sort  ") +
 		keyStyle.Render("Enter") + descStyle.Render(" report  ") +
 		keyStyle.Render("o") + descStyle.Render(" open URL  ") +
+		keyStyle.Render("b") + descStyle.Render(" handoff  ") +
+		keyStyle.Render("r") + descStyle.Render(" resume  ") +
 		keyStyle.Render("c") + descStyle.Render(" change  ") +
 		keyStyle.Render("v") + descStyle.Render(" view  ") +
 		keyStyle.Render("Esc") + descStyle.Render(" quit")
@@ -878,6 +906,7 @@ func (m PipelineModel) statusColorMap() map[string]lipgloss.Color {
 		"responded": m.theme.Blue,
 		"evaluated": m.theme.Text,
 		"applying":  m.theme.Yellow,
+		"paused":    m.theme.Yellow,
 		"blocked":   m.theme.Red,
 		"failed":    m.theme.Red,
 		"skip":      m.theme.Red,
@@ -911,6 +940,8 @@ func statusLabel(norm string) string {
 		return "Evaluated"
 	case "applying":
 		return "Applying"
+	case "paused":
+		return "Paused"
 	case "blocked":
 		return "Blocked"
 	case "failed":
